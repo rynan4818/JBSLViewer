@@ -1,6 +1,8 @@
 # JBSLViewer
 このBeatSaberプラグインは[JBSL-Web](https://jbsl-web.herokuapp.com/)の情報を表示します。
 
+![image](https://github.com/user-attachments/assets/03c01179-40c5-45e3-a5e4-eee59ba9d157)
+
 現在は、Live Leaguesのリーダーボードを表示する機能があります。
 
 ## 特徴
