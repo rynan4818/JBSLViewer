@@ -54,8 +54,8 @@ namespace JBSLViewer.Views
         {
             this._init = true;
             var color = new Color32(228, 144, 50, 255);
-            this._titileBar.background.material = Utilities.ImageResources.NoGlowMat;
-            var imageView = this._titileBar.background as ImageView;
+            this._titileBar.Background.material = Utilities.ImageResources.NoGlowMat;
+            var imageView = this._titileBar.Background as ImageView;
             imageView.color = color;
             imageView.color0 = color;
             imageView.color1 = color;
@@ -101,7 +101,7 @@ namespace JBSLViewer.Views
                 var record = new Record($"#{score.standing}", score.name, score.pos.ToString(), $"{score.acc:F2}%");
                 this._records.Add(record);
             }
-            this._list.tableView.ReloadData();
+            this._list.TableView.ReloadData();
         }
 
         public class Record
