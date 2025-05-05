@@ -26,23 +26,23 @@ namespace JBSLViewer.Models
             this._standardLevelDetail.didChangeDifficultyBeatmapEvent += StandardLevelDetail_didChangeDifficultyBeatmapEvent;
             this._standardLevelDetail.didChangeContentEvent += StandardLevelDetail_didChangeContentEvent;
         }
-        public void StandardLevelDetail_didChangeDifficultyBeatmapEvent(StandardLevelDetailViewController arg1)
+        public void StandardLevelDetail_didChangeDifficultyBeatmapEvent(StandardLevelDetailViewController arg1, IDifficultyBeatmap arg2)
         {
-            if (arg1 != null && arg1.beatmapLevel != null)
-                BeatmapInfoUpdated(arg1.beatmapKey, arg1.beatmapLevel);
+            if (arg1 != null && arg2 != null)
+                BeatmapInfoUpdated(arg2);
         }
         public void StandardLevelDetail_didChangeContentEvent(StandardLevelDetailViewController arg1, StandardLevelDetailViewController.ContentType arg2)
         {
-            if (arg1 != null && arg1.beatmapLevel != null)
-                BeatmapInfoUpdated(arg1.beatmapKey, arg1.beatmapLevel);
+            if (arg1 != null && arg1.selectedDifficultyBeatmap != null)
+                BeatmapInfoUpdated(arg1.selectedDifficultyBeatmap);
         }
-        public void BeatmapInfoUpdated(BeatmapKey beatmapKey, BeatmapLevel beatmapLevel)
+        public void BeatmapInfoUpdated(IDifficultyBeatmap beatmap)
         {
             if (LeaderboardPanelViewController.AllResetSemaphore.CurrentCount == 0 || LeaderboardPanelViewController.SetLeaderboardSemaphore.CurrentCount == 0)
                 return;
-            if (!beatmapKey.IsValid())
+            var levelId = beatmap?.level?.levelID;
+            if (levelId == null)
                 return;
-            var levelId = beatmapKey.levelId;
             // 13は "custom_level_"、40はSHA-1ハッシュの長さを表すマジックナンバー
             var hash = Regex.IsMatch(levelId, "^custom_level_[0-9A-F]{40}", RegexOptions.IgnoreCase) && !levelId.EndsWith(" WIP") ? levelId.Substring(13, 40) : null;
             if (hash == null)
