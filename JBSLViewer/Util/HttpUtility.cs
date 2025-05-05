@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace JBSLViewer.Util
@@ -7,8 +8,16 @@ namespace JBSLViewer.Util
     public static class HttpUtility
     {
         public static readonly HttpClient httpClient = new HttpClient();
+        public static bool Init = false;
         public static async Task<string> GetHttpContentAsync(string url)
         {
+            var assenblyName = Assembly.GetExecutingAssembly().GetName();
+            var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            if (!Init)
+            {
+                Init = true;
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", $"{assenblyName}/{version}");
+            }
             try
             {
                 return await httpClient.GetStringAsync(url);

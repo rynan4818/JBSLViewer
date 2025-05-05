@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.IO;
+using System.Runtime.CompilerServices;
 using IPA.Config.Stores;
 
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
@@ -7,11 +8,15 @@ namespace JBSLViewer.Configuration
     internal class PluginConfig
     {
         public static PluginConfig Instance { get; set; }
+        public static readonly string DefaultSaveDataFile = Path.Combine(IPA.Utilities.UnityGame.UserDataPath, "JBSLViewerSaveData.json");
+        public virtual string SaveDataFile { get; set; } = DefaultSaveDataFile;
         public virtual int refreshInterval { get; set; } = 10; // 更新間隔（分）
         public virtual int selectLeagueID { get; set; } = -1; // 選択中のリーグID
         public virtual string leaderboardApiUrl { get; set; } = "https://jbsl-web.herokuapp.com/leaderboard/api/";
         public virtual string activeLeagueApiUrl { get; set; } = "https://jbsl-web.herokuapp.com/api/active_league";
         public virtual string headlinesUrl { get; set; } = "https://jbsl-web.herokuapp.com/headlines/1";
+        public virtual string leaderboardInfoUrlHeader { get; set; } = "https://scoresaber.com/api/leaderboard/by-id/";
+        public virtual string leaderboardInfoUrlFooter { get; set; } = "/info";
         public virtual string headlineLatest { get; set; } = @"（(\d{1,4})年(\d{1,2})月(\d{1,2})日(\d{1,2}:\d{1,2})）"; // ヘッドラインの日付正規表現
 
         /// <summary>

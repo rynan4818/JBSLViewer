@@ -81,8 +81,14 @@ namespace JBSLViewer.Views
         }
         public void SetRecords()
         {
-            var leagueID = int.Parse(this._leaderboardPanelViewController.JBSLLeagueValue);
-            var index = int.Parse(this._leaderboardPanelViewController.LeaderboardValue);
+            this._records.Clear();
+            this._list.TableView.ReloadData();
+            if (LeaderboardPanelViewController.AllResetSemaphore.CurrentCount == 0 || LeaderboardPanelViewController.SetLeaderboardSemaphore.CurrentCount == 0)
+                return;
+            if (!int.TryParse(this._leaderboardPanelViewController.JBSLLeagueValue, out var leagueID))
+                return;
+            if (!int.TryParse(this._leaderboardPanelViewController.LeaderboardValue, out var index))
+                return;
             List<Score> scores;
             if (index == 0)
                 scores = this._leaderboard.GetTotalLeaderboard(leagueID);
@@ -90,7 +96,6 @@ namespace JBSLViewer.Views
                 scores = this._leaderboard.GetMapLeaderboard(leagueID, index - 1);
             if (scores == null)
                 return;
-            this._records.Clear();
             var maxPage = (scores.Count - 1) / 10;
             if (maxPage < this._page)
                 this._page = maxPage;

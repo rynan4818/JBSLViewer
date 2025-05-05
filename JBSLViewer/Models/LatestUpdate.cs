@@ -18,7 +18,6 @@ namespace JBSLViewer.Models
                 return;
             this._getActive = true;
             this._init = true;
-            this._latest = DateTime.Now;
             string resHTMLString;
             try
             {
@@ -42,10 +41,13 @@ namespace JBSLViewer.Models
             var month = latestString.Groups[2].Value;
             var day = latestString.Groups[3].Value;
             var time = latestString.Groups[4].Value;
-            if (!DateTime.TryParse($"{year}/{month}/{day} {time}:00", out var latest))
+            if (!DateTime.TryParse($"{year}/{month}/{day} {time}:59", out var latest))
+                latest = DateTime.Now;
+            if (latest > DateTime.Now)
                 latest = DateTime.Now;
             this._latest = latest;
             this._getActive = false;
+            this.RefrashLatest();
             return;
         }
 

@@ -54,6 +54,11 @@
       <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="DataModels, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\DataModels.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="LeaderboardCore, Version=1.5.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Plugins\LeaderboardCore.dll</HintPath>
@@ -136,6 +141,10 @@
     <Compile Include="Models\Leaderboard.cs" />
     <Compile Include="Models\JBSL\LeagueJson.cs" />
     <Compile Include="Models\JBSL\LeaderboardJson.cs" />
+    <Compile Include="Models\LeaderboardInfo.cs" />
+    <Compile Include="Models\SaveData.cs" />
+    <Compile Include="Models\ScoreSaber\LeaderboardInfoJson.cs" />
+    <Compile Include="Models\UIManager.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -172,5 +181,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Images\sankaku.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

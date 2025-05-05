@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using JBSLViewer.Configuration;
 using JBSLViewer.Util;
@@ -12,7 +13,7 @@ namespace JBSLViewer.Models
     {
         private readonly LatestUpdate _latestUpdate;
         public bool _getActive = false;
-        public Dictionary<int, LeaderboardJson> _leaderboards = new Dictionary<int, LeaderboardJson>();
+        public ConcurrentDictionary<int, LeaderboardJson> _leaderboards = new ConcurrentDictionary<int, LeaderboardJson>();
         public Leaderboard(LatestUpdate latestUpdate)
         {
             this._latestUpdate = latestUpdate;
@@ -44,7 +45,7 @@ namespace JBSLViewer.Models
             if (this._leaderboards.ContainsKey(leagueID))
                 this._leaderboards[leagueID] = leaderboard;
             else
-                this._leaderboards.Add(leagueID, leaderboard);
+                this._leaderboards.TryAdd(leagueID, leaderboard);
             this._getActive = false;
             return;
         }
@@ -65,6 +66,12 @@ namespace JBSLViewer.Models
             if (leagueID == -1 || !this._leaderboards.ContainsKey(leagueID))
                 return null;
             return this._leaderboards[leagueID].total_rank;
+        }
+        public List<Map> GetMap(int leagueID)
+        {
+            if (leagueID == -1 || !this._leaderboards.ContainsKey(leagueID))
+                return null;
+            return this._leaderboards[leagueID].maps;
         }
     }
 }
