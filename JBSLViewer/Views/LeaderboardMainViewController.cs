@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
 using BS_Utils.Gameplay;
 using HMUI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Zenject;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
@@ -73,6 +75,7 @@ namespace JBSLViewer.Views
             imageView._skew = 0.18f;
             imageView.gradient = true;
             imageView.SetVerticesDirty();
+            _ = JBSLHoverHintController.Instance;
             this.SetTitle();
         }
 
@@ -272,17 +275,258 @@ namespace JBSLViewer.Views
 
             private static void AddHoverHint(TMP_Text text, string tooltip)
             {
-                if (text == null || string.IsNullOrWhiteSpace(tooltip))
+                if (text == null)
                     return;
 
-                text.raycastTarget = true;
-                var hoverHint = text.GetComponent<HoverHint>();
+                var legacyHoverHint = text.GetComponent<HoverHint>();
+                if (legacyHoverHint != null)
+                {
+                    legacyHoverHint.enabled = false;
+                    Destroy(legacyHoverHint);
+                }
+
+                var hoverHint = text.GetComponent<JBSLHoverHint>();
                 if (hoverHint == null)
-                    hoverHint = BeatSaberMarkupLanguage.BeatSaberUI.DiContainer.InstantiateComponent<HoverHint>(text.gameObject);
-                else
-                    BeatSaberMarkupLanguage.BeatSaberUI.DiContainer.Inject(hoverHint);
-                hoverHint.text = tooltip;
+                    hoverHint = text.gameObject.AddComponent<JBSLHoverHint>();
+
+                var hasTooltip = !string.IsNullOrWhiteSpace(tooltip);
+                text.raycastTarget = hasTooltip;
+                hoverHint.enabled = hasTooltip;
+                hoverHint.text = hasTooltip ? tooltip : null;
             }
+        }
+    }
+
+    public class JBSLHoverHint : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    {
+        private readonly Vector3[] _worldCornersTemp = new Vector3[4];
+
+        public string text { get; set; }
+
+        public Vector2 size
+        {
+            get
+            {
+                return ((RectTransform)this.transform).rect.size;
+            }
+        }
+
+        public Vector3 worldCenter
+        {
+            get
+            {
+                ((RectTransform)this.transform).GetWorldCorners(this._worldCornersTemp);
+                var center = Vector3.zero;
+                for (var i = 0; i < this._worldCornersTemp.Length; i++)
+                    center += this._worldCornersTemp[i];
+                return center * 0.25f;
+            }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            JBSLHoverHintController.Instance?.ShowHint(this);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            var controller = JBSLHoverHintController.InstanceOrNull;
+            if (controller == null)
+                return;
+
+            if (eventData.currentInputModule == null || !eventData.currentInputModule.enabled)
+                controller.HideHintInstant();
+            else
+                controller.HideHint();
+        }
+
+        public void OnDisable()
+        {
+            JBSLHoverHintController.InstanceOrNull?.HideHintInstant();
+        }
+    }
+
+    public class JBSLHoverHintController : MonoBehaviour
+    {
+        private const float ShowHintDelay = 0.6f;
+        private const float HideHintDelay = 0.3f;
+        private static JBSLHoverHintController _instance;
+
+        private HoverHintPanel _hoverHintPanelPrefab;
+        private HoverHintPanel _hoverHintPanel;
+        private bool _isHiding;
+        private bool _isShown;
+
+        public static JBSLHoverHintController Instance
+        {
+            get
+            {
+                if (_instance != null)
+                    return _instance;
+
+                var controllers = Resources.FindObjectsOfTypeAll<JBSLHoverHintController>();
+                if (controllers != null && controllers.Length > 0)
+                {
+                    _instance = controllers[0];
+                    return _instance;
+                }
+
+                var baseController = BeatSaberUI.HoverHintController;
+                if (baseController == null)
+                    return null;
+
+                var gameObject = new GameObject("JBSLHoverHintController");
+                gameObject.transform.SetParent(baseController.transform, false);
+
+                _instance = gameObject.AddComponent<JBSLHoverHintController>();
+                _instance.Initialize(baseController);
+                return _instance;
+            }
+        }
+
+        public static JBSLHoverHintController InstanceOrNull => _instance;
+
+        public void Initialize(HoverHintController baseController)
+        {
+            if (this._hoverHintPanel != null)
+                return;
+
+            this._hoverHintPanelPrefab = baseController._hoverHintPanel ?? baseController._hoverHintPanelPrefab;
+            if (this._hoverHintPanelPrefab == null)
+                return;
+
+            this._hoverHintPanel = Instantiate(this._hoverHintPanelPrefab, this.transform);
+            this._hoverHintPanel.Hide();
+            this._isShown = false;
+        }
+
+        public void OnDestroy()
+        {
+            if (_instance == this)
+                _instance = null;
+        }
+
+        public void ShowHint(JBSLHoverHint hoverHint)
+        {
+            if (hoverHint == null || string.IsNullOrEmpty(hoverHint.text))
+                return;
+
+            if (this._hoverHintPanel == null)
+                this.Initialize(BeatSaberUI.HoverHintController);
+            if (this._hoverHintPanel == null)
+                return;
+
+            this._isHiding = false;
+            this.StopAllCoroutines();
+            if (this._isShown)
+            {
+                this.SetupAndShowHintPanel(hoverHint);
+                return;
+            }
+
+            this.StartCoroutine(this.ShowHintAfterDelay(hoverHint, ShowHintDelay));
+        }
+
+        public void HideHint()
+        {
+            if (this._isHiding || this._hoverHintPanel == null)
+                return;
+
+            this.StopAllCoroutines();
+            this.StartCoroutine(this.HideHintAfterDelay(HideHintDelay));
+        }
+
+        public void HideHintInstant()
+        {
+            this.StopAllCoroutines();
+            if (this._hoverHintPanel == null || !this._isShown)
+                return;
+
+            this._hoverHintPanel.Hide();
+            this._isShown = false;
+            this._isHiding = false;
+        }
+
+        private IEnumerator ShowHintAfterDelay(JBSLHoverHint hoverHint, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (hoverHint != null)
+                this.SetupAndShowHintPanel(hoverHint);
+        }
+
+        private IEnumerator HideHintAfterDelay(float delay)
+        {
+            this._isHiding = true;
+            yield return new WaitForSeconds(delay);
+            if (this._hoverHintPanel != null)
+                this._hoverHintPanel.Hide();
+            this._isShown = false;
+            this._isHiding = false;
+        }
+
+        private void SetupAndShowHintPanel(JBSLHoverHint hoverHint)
+        {
+            var rectTransform = (RectTransform)GetScreenTransformForHoverHint(hoverHint.transform);
+            var spawnRect = default(Rect);
+            spawnRect.size = hoverHint.size;
+            spawnRect.position = rectTransform.InverseTransformPoint(hoverHint.worldCenter);
+            spawnRect.position -= spawnRect.size * 0.5f;
+            this.ShowPanel(hoverHint.text, rectTransform, rectTransform.rect.size, spawnRect);
+        }
+
+        private void ShowPanel(string text, RectTransform parent, Vector2 containerSize, Rect spawnRect)
+        {
+            var panelTransform = (RectTransform)this._hoverHintPanel.transform;
+            panelTransform.SetParent(parent, false);
+            panelTransform.SetAsLastSibling();
+            panelTransform.localScale = Vector3.one;
+            panelTransform.localRotation = Quaternion.identity;
+
+            this._hoverHintPanel.gameObject.SetActive(true);
+
+            var textComponent = this._hoverHintPanel._text;
+            textComponent.text = text;
+            textComponent.ForceMeshUpdate();
+
+            var panelTextSize = (Vector2)textComponent.bounds.size;
+            var panelSize = panelTextSize + this._hoverHintPanel._padding;
+            panelTransform.sizeDelta = panelSize;
+            panelTransform.anchoredPosition = CalculatePanelPosition(
+                containerSize,
+                spawnRect,
+                panelSize,
+                this._hoverHintPanel._containerPadding,
+                this._hoverHintPanel._separator);
+
+            var localPosition = panelTransform.localPosition;
+            localPosition.z = -this._hoverHintPanel._zOffset;
+            panelTransform.localPosition = localPosition;
+
+            this._isShown = true;
+            this._isHiding = false;
+        }
+
+        private static Vector2 CalculatePanelPosition(Vector2 containerSize, Rect spawnRect, Vector2 panelSize, Vector2 containerPadding, float separator)
+        {
+            var minX = -containerSize.x * 0.5f + containerPadding.x + panelSize.x * 0.5f;
+            var maxX = containerSize.x * 0.5f - containerPadding.x - panelSize.x * 0.5f;
+            var x = Mathf.Clamp(spawnRect.center.x, minX, maxX);
+
+            var aboveY = spawnRect.center.y + spawnRect.size.y * 0.5f + separator + panelSize.y * 0.5f;
+            return new Vector2(x, aboveY);
+        }
+
+        private static Transform GetScreenTransformForHoverHint(Transform hoverHintTransform)
+        {
+            var transform = hoverHintTransform;
+            while (transform != null)
+            {
+                if (transform.GetComponent<Canvas>() != null && transform.GetComponent<HMUI.Screen>() != null)
+                    return transform;
+                transform = transform.parent;
+            }
+
+            return hoverHintTransform;
         }
     }
 }
