@@ -9,7 +9,7 @@
         //public int? owner_id { get; set; }
         //public string description { get; set; }
         //public string color { get; set; }
-        //public int max_valid { get; set; }
+        public int max_valid { get; set; }
         //public float limit { get; set; }
         //public string end { get; set; }
         //public bool isPermanent { get; set; }

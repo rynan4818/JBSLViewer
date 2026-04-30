@@ -26,7 +26,7 @@ namespace JBSLViewer.Models.JBSL
     public class Score
     {
         public int standing { get; set; }
-        //public string sid { get; set; }
+        public string sid { get; set; }
         public string name { get; set; }
         public float acc { get; set; }
         public int pos { get; set; }

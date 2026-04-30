@@ -15,16 +15,19 @@
       <vertical>
         <horizontal pref-width="86" bg="round-rect-panel">
           <vertical pref-width="10">
-            <text text="~standing" font-size="3" align="Center"/>
+            <text id="StandingText" text="~standing" font-size="3" align="Center"/>
           </vertical>
-          <vertical pref-width="40">
-            <text text="~name" font-size="4" overflow-mode="Ellipsis" word-wrapping="false"/>
+          <vertical pref-width="38">
+            <text id="NameText" text="~name" font-size="4" overflow-mode="Ellipsis" word-wrapping="false"/>
+          </vertical>
+          <vertical pref-width="14">
+            <text id="PosText" text="~pos" font-size="3.5" align="Center" word-wrapping="false"/>
+          </vertical>
+          <vertical pref-width="9">
+            <text id="ValidText" text="~valid" font-size="3.5" align="Center" word-wrapping="false"/>
           </vertical>
           <vertical pref-width="15">
-            <text text="~pos" font-size="3.5" align="Center" word-wrapping="false"/>
-          </vertical>
-          <vertical pref-width="13">
-            <text text="~acc" font-size="3.5" align="Center" word-wrapping="false"/>
+            <text id="AccText" text="~acc" font-size="3.5" align="Center" word-wrapping="false"/>
           </vertical>
         </horizontal>
         <horizontal pref-width="86" pref-height="0.4" bg="panel-top" bg-color="#888888"/>

@@ -57,5 +57,12 @@ namespace JBSLViewer.Models
                 return -1;
             return this._leagues.FindIndex(x => x.id == leagueID);
         }
+
+        public int GetLeagueMaxValid(int leagueID)
+        {
+            if (this._leagues == null || this._leagues.Count <= 0 || leagueID < 0 || this._leagues.FindIndex(x => x.id == leagueID) == -1)
+                return -1;
+            return this._leagues.Find(x => x.id == leagueID).max_valid;
+        }
     }
 }

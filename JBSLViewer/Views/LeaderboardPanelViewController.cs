@@ -53,6 +53,8 @@ namespace JBSLViewer.Views
             this._currentCycleTime = 0f;
             this._latestUpdate.RefrashLatest();
             this.RfreshTimeUpdate();
+            if (this._leaderboardMainViewController.TryRefreshCurrentUserSid())
+                this._leaderboardMainViewController.SetRecords();
             if (LeaderboardInfoSemaphore.CurrentCount == 0 || AllResetSemaphore.CurrentCount == 0 || SetLeaderboardSemaphore.CurrentCount == 0)
                 return;
             if (!int.TryParse(this._jbslLeagueValue, out var leagueID))
