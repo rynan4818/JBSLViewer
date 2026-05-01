@@ -30,5 +30,6 @@ namespace JBSLViewer.Models.JBSL
         public string name { get; set; }
         public float acc { get; set; }
         public int pos { get; set; }
+        public int miss { get; set; }
     }
 }

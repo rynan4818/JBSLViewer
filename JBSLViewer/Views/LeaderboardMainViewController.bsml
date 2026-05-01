@@ -17,16 +17,19 @@
           <vertical pref-width="10">
             <text id="StandingText" text="~standing" font-size="3" align="Center"/>
           </vertical>
-          <vertical pref-width="38">
+          <vertical pref-width="31">
             <text id="NameText" text="~name" font-size="4" overflow-mode="Ellipsis" word-wrapping="false"/>
           </vertical>
-          <vertical pref-width="14">
+          <vertical pref-width="13">
             <text id="PosText" text="~pos" font-size="3.5" align="Center" word-wrapping="false"/>
           </vertical>
-          <vertical pref-width="9">
+          <vertical pref-width="12">
+            <text id="RatioOrMissText" text="~ratio_or_miss" font-size="3.1" align="Center" word-wrapping="false"/>
+          </vertical>
+          <vertical pref-width="8">
             <text id="ValidText" text="~valid" font-size="3.5" align="Center" word-wrapping="false"/>
           </vertical>
-          <vertical pref-width="15">
+          <vertical pref-width="12">
             <text id="AccText" text="~acc" font-size="3.5" align="Center" word-wrapping="false"/>
           </vertical>
         </horizontal>

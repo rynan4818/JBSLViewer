@@ -23,6 +23,7 @@ namespace JBSLViewer.Views
         private static readonly Color32 SelfColor = new Color32(90, 210, 255, 255);
         private static readonly Color32 ValidColor = new Color32(110, 255, 145, 255);
         private static readonly Color32 InvalidColor = new Color32(150, 150, 150, 255);
+        private const int TheoreticalBaseOffset = 3;
 
         public bool _init = false;
         public int _page = 0;
@@ -138,6 +139,7 @@ namespace JBSLViewer.Views
                 return;
 
             var validityContext = this._leaderboard.BuildValidityContext(leagueID, Math.Max(this._activeLeague.GetLeagueMaxValid(leagueID), 0));
+            var totalMaxPos = BuildTotalMaxPos(scores?.Count ?? 0, Math.Max(this._activeLeague.GetLeagueMaxValid(leagueID), 0));
             var maxPage = Math.Max(0, (scores.Count - 1) / 10);
             if (maxPage < this._page)
                 this._page = maxPage;
@@ -153,6 +155,7 @@ namespace JBSLViewer.Views
                         $"#{score.standing}",
                         score.name ?? string.Empty,
                         score.pos.ToString(),
+                        FormatTotalRatio(score.pos, totalMaxPos),
                         summary?.ValidCount.ToString() ?? "0",
                         $"{score.acc:F2}%",
                         this.IsCurrentUser(score.sid),
@@ -174,8 +177,9 @@ namespace JBSLViewer.Views
                         $"#{score.standing}",
                         score.name ?? string.Empty,
                         score.pos.ToString(),
-                        isValid ? "O" : "-",
+                        isValid ? "✓" : "-",
                         $"{score.acc:F2}%",
+                        FormatMiss(score.miss),
                         this.IsCurrentUser(score.sid),
                         isValid,
                         false,
@@ -194,6 +198,30 @@ namespace JBSLViewer.Views
             return !string.IsNullOrEmpty(this._selfSid) && string.Equals(this._selfSid, sid, StringComparison.Ordinal);
         }
 
+        private static int BuildTotalMaxPos(int playerCount, int maxValid)
+        {
+            if (playerCount <= 0 || maxValid <= 0)
+                return 0;
+
+            return maxValid * (playerCount + TheoreticalBaseOffset);
+        }
+
+        private static string FormatTotalRatio(int totalPos, int totalMaxPos)
+        {
+            if (totalMaxPos <= 0)
+                return "(0.00 %)";
+            if (totalPos >= totalMaxPos)
+                return "MAX";
+
+            var ratio = (float)totalPos / totalMaxPos * 100f;
+            return $"({ratio:F2} %)";
+        }
+
+        private static string FormatMiss(int miss)
+        {
+            return miss <= 0 ? "FC" : miss.ToString();
+        }
+
         public class Record
         {
             [UIValue("standing")]
@@ -204,6 +232,9 @@ namespace JBSLViewer.Views
 
             [UIValue("pos")]
             public string _pos { get; }
+
+            [UIValue("ratio_or_miss")]
+            public string _ratioOrMiss { get; }
 
             [UIValue("valid")]
             public string _valid { get; }
@@ -227,17 +258,21 @@ namespace JBSLViewer.Views
             [UIComponent("PosText")]
             private readonly TextMeshProUGUI _posText;
 
+            [UIComponent("RatioOrMissText")]
+            private readonly TextMeshProUGUI _ratioOrMissText;
+
             [UIComponent("ValidText")]
             private readonly TextMeshProUGUI _validText;
 
             [UIComponent("AccText")]
             private readonly TextMeshProUGUI _accText;
 
-            public Record(string standing, string name, string pos, string valid, string acc, bool isCurrentUser, bool isMapValid, bool isTotalRecord, string posTooltip, string validTooltip, string accTooltip)
+            public Record(string standing, string name, string pos, string ratioOrMiss, string valid, string acc, bool isCurrentUser, bool isMapValid, bool isTotalRecord, string posTooltip, string validTooltip, string accTooltip)
             {
                 this._standing = standing;
                 this._name = name;
                 this._pos = pos;
+                this._ratioOrMiss = ratioOrMiss;
                 this._valid = valid;
                 this._acc = acc;
                 this._isCurrentUser = isCurrentUser;
@@ -255,12 +290,18 @@ namespace JBSLViewer.Views
                 ApplyColor(this._standingText, mainColor);
                 ApplyColor(this._nameText, mainColor);
                 ApplyColor(this._posText, mainColor);
-                ApplyColor(this._accText, mainColor);
-
                 if (this._isTotalRecord)
+                {
+                    ApplyColor(this._ratioOrMissText, mainColor);
                     ApplyColor(this._validText, mainColor);
+                    ApplyColor(this._accText, mainColor);
+                }
                 else
-                    ApplyColor(this._validText, this._isMapValid ? ValidColor : InvalidColor);
+                {
+                    ApplyColor(this._ratioOrMissText, this._isMapValid ? ValidColor : InvalidColor);
+                    ApplyColor(this._validText, mainColor);
+                    ApplyColor(this._accText, mainColor);
+                }
 
                 AddHoverHint(this._posText, this._posTooltip);
                 AddHoverHint(this._validText, this._validTooltip);
