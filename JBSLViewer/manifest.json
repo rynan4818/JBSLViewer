@@ -3,13 +3,14 @@
   "id": "JBSLViewer",
   "name": "JBSLViewer",
   "author": "Rynan",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "JBSL-Web Viewer",
   "gameVersion": "1.35.0",
   "dependsOn": {
     "BSIPA": "^4.3.3",
     "SiraUtil": "^3.1.7",
     "BeatSaberMarkupLanguage": "^1.10.2",
+    "BS Utils": "^1.14.0",
     "LeaderboardCore": "^1.6.0"
   }
 }
