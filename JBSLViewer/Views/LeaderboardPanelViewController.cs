@@ -250,10 +250,7 @@ namespace JBSLViewer.Views
                 int.TryParse(this._jbslLeagueValue, out var currentLeagueId) &&
                 currentLeagueId == this._virtualProgressLeagueId)
             {
-                var progress = this._virtualProgressTotal <= 0
-                    ? 0f
-                    : Mathf.Clamp01((float)this._virtualProgressCompleted / this._virtualProgressTotal) * 100f;
-                this._autoReloadTimer.text = $"Loading Virtual Scores {progress:F2} %";
+                this._autoReloadTimer.text = $"Loading Virtual Scores {this._virtualProgressCompleted} / {this._virtualProgressTotal}";
                 return;
             }
 

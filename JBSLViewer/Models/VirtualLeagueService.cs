@@ -7,6 +7,7 @@ using JBSLViewer.Util;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Policy;
 using System.Threading;
@@ -25,6 +26,7 @@ namespace JBSLViewer.Models
         private bool _userLookupRequested;
         private string _selfSid;
         private string _selfName;
+        private static readonly TimeSpan ScoreSaberRecentFreshnessWindow = TimeSpan.FromMinutes(10);
 
         public event Action<int> VirtualLeaderboardUpdated;
         public event Action<int> VirtualAvailabilityChanged;
@@ -184,55 +186,11 @@ namespace JBSLViewer.Models
             await this._updateSemaphore.WaitAsync();
             try
             {
-                var recentUrl = $"{PluginConfig.Instance.scoreSaberPlayerUrlHeader}{this._selfSid}{PluginConfig.Instance.scoreSaberRecentScoresUrlFooter}";
-                var resJsonString = await HttpUtility.GetHttpContentAsync(recentUrl);
-                if (resJsonString == null)
-                    return;
+                var useBeatLeaderFallback = await this.TryApplyRecentScoreSaberScoresAsync(updatedLeagueIds);
+                if (useBeatLeaderFallback)
+                    await this.TryApplyRecentBeatLeaderScoresAsync(updatedLeagueIds);
 
-                var recentScores = JsonConvert.DeserializeObject<ScoreSaberPlayerRecentScoresJson>(resJsonString);
-                if (recentScores?.playerScores == null || recentScores.playerScores.Count <= 0)
-                    return;
-
-                foreach (var recentScore in recentScores.playerScores)
-                {
-                    var lid = recentScore?.leaderboard?.id.ToString();
-                    if (string.IsNullOrEmpty(lid) || recentScore.score == null)
-                        continue;
-
-                    foreach (var state in this._leagueStates.Values.Where(x => x.Initialized))
-                    {
-                        if (!state.MapStates.TryGetValue(lid, out var mapState))
-                            continue;
-
-                        mapState.InitialSelfScoreFetched = true;
-                        mapState.SelfScore = new VirtualSelfScore
-                        {
-                            HasScore = true,
-                            RawScore = recentScore.score.modifiedScore,
-                            Miss = recentScore.score.badCuts + recentScore.score.missedNotes,
-                        };
-                        if (recentScore.leaderboard != null && recentScore.leaderboard.maxScore > 0)
-                        {
-                            mapState.ScoreSaberInfoFetched = true;
-                            mapState.ScoreSaberMaxScore = recentScore.leaderboard.maxScore;
-                            this.LogMaxScoreDifference(mapState);
-                        }
-
-                        state.Dirty = true;
-                        if (!updatedLeagueIds.Contains(state.LeagueId))
-                            updatedLeagueIds.Add(state.LeagueId);
-                    }
-                }
-
-                foreach (var leagueId in updatedLeagueIds)
-                {
-                    if (!this._leagueStates.TryGetValue(leagueId, out var state))
-                        continue;
-                    var sourceLeaderboard = this._leaderboard.GetLeaderboardData(leagueId);
-                    if (sourceLeaderboard == null)
-                        continue;
-                    this.BuildVirtualLeaderboardIfNeeded(leagueId, state, sourceLeaderboard, true);
-                }
+                this.RebuildUpdatedVirtualLeaderboards(updatedLeagueIds);
             }
             finally
             {
@@ -240,6 +198,150 @@ namespace JBSLViewer.Models
             }
 
             this.RaiseVirtualLeaderboardUpdated(updatedLeagueIds);
+        }
+
+        private async Task<bool> TryApplyRecentScoreSaberScoresAsync(List<int> updatedLeagueIds)
+        {
+            var recentUrl = $"{PluginConfig.Instance.scoreSaberPlayerUrlHeader}{this._selfSid}{PluginConfig.Instance.scoreSaberRecentScoresUrlFooter}";
+            var resJsonString = await HttpUtility.GetHttpContentAsync(recentUrl);
+            if (string.IsNullOrWhiteSpace(resJsonString))
+                return true;
+
+            ScoreSaberPlayerRecentScoresJson recentScores;
+            try
+            {
+                recentScores = JsonConvert.DeserializeObject<ScoreSaberPlayerRecentScoresJson>(resJsonString);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log?.Error(ex.ToString());
+                return true;
+            }
+
+            if (recentScores?.playerScores == null || recentScores.playerScores.Count <= 0)
+                return true;
+            if (!IsRecentScoreFresh(recentScores.playerScores[0]?.score?.timeSet))
+                return true;
+
+            foreach (var recentScore in recentScores.playerScores)
+            {
+                var lid = recentScore?.leaderboard?.id.ToString();
+                if (string.IsNullOrEmpty(lid) || recentScore.score == null)
+                    continue;
+
+                this.ApplySelfScoreToInitializedStatesByLid(
+                    lid,
+                    recentScore.score.modifiedScore,
+                    recentScore.score.badCuts + recentScore.score.missedNotes,
+                    recentScore.leaderboard?.maxScore,
+                    updatedLeagueIds);
+            }
+
+            return false;
+        }
+
+        private async Task TryApplyRecentBeatLeaderScoresAsync(List<int> updatedLeagueIds)
+        {
+            var url = $"https://api.beatleader.com/player/{this._selfSid}/scores/compact?sortBy=date&order=desc";
+            var resJsonString = await HttpUtility.GetHttpContentAsync(url, true);
+            if (string.IsNullOrWhiteSpace(resJsonString))
+                return;
+
+            BeatLeaderCompactScoresJson compactScores;
+            try
+            {
+                compactScores = JsonConvert.DeserializeObject<BeatLeaderCompactScoresJson>(resJsonString);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log?.Error(ex.ToString());
+                return;
+            }
+
+            if (compactScores?.data == null || compactScores.data.Count <= 0)
+                return;
+
+            var appliedMapKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var recentScore in compactScores.data)
+            {
+                if (recentScore?.score == null || recentScore.leaderboard == null)
+                    continue;
+
+                var mapKey = CreateBeatLeaderMapKey(
+                    recentScore.leaderboard.songHash,
+                    recentScore.leaderboard.modeName,
+                    recentScore.leaderboard.difficulty);
+                if (string.IsNullOrEmpty(mapKey) || !appliedMapKeys.Add(mapKey))
+                    continue;
+
+                foreach (var state in this._leagueStates.Values.Where(x => x.Initialized))
+                {
+                    foreach (var mapState in state.MapStates.Values)
+                    {
+                        if (!IsBeatLeaderCompactMatch(mapState, recentScore.leaderboard))
+                            continue;
+
+                        this.ApplySelfScoreToMapState(
+                            state,
+                            mapState,
+                            recentScore.score.modifiedScore,
+                            recentScore.score.badCuts + recentScore.score.missedNotes,
+                            null,
+                            updatedLeagueIds);
+                    }
+                }
+            }
+        }
+
+        private void ApplySelfScoreToInitializedStatesByLid(string lid, int rawScore, int miss, int? maxScore, List<int> updatedLeagueIds)
+        {
+            foreach (var state in this._leagueStates.Values.Where(x => x.Initialized))
+            {
+                if (!state.MapStates.TryGetValue(lid, out var mapState))
+                    continue;
+
+                this.ApplySelfScoreToMapState(state, mapState, rawScore, miss, maxScore, updatedLeagueIds);
+            }
+        }
+
+        private void ApplySelfScoreToMapState(VirtualLeagueState state, VirtualMapState mapState, int rawScore, int miss, int? maxScore, List<int> updatedLeagueIds)
+        {
+            if (state == null || mapState == null)
+                return;
+
+            mapState.InitialSelfScoreFetched = true;
+            mapState.SelfScore = new VirtualSelfScore
+            {
+                HasScore = true,
+                RawScore = rawScore,
+                Miss = Math.Max(0, miss),
+            };
+
+            if (maxScore.HasValue && maxScore.Value > 0)
+            {
+                mapState.ScoreSaberInfoFetched = true;
+                mapState.ScoreSaberMaxScore = maxScore.Value;
+                this.LogMaxScoreDifference(mapState);
+            }
+
+            state.Dirty = true;
+            if (!updatedLeagueIds.Contains(state.LeagueId))
+                updatedLeagueIds.Add(state.LeagueId);
+        }
+
+        private void RebuildUpdatedVirtualLeaderboards(List<int> updatedLeagueIds)
+        {
+            foreach (var leagueId in updatedLeagueIds)
+            {
+                if (!this._leagueStates.TryGetValue(leagueId, out var state))
+                    continue;
+
+                var sourceLeaderboard = this._leaderboard.GetLeaderboardData(leagueId);
+                if (sourceLeaderboard == null)
+                    continue;
+
+                this.BuildVirtualLeaderboardIfNeeded(leagueId, state, sourceLeaderboard, true);
+            }
         }
 
         public void OnAccuracyModeChanged()
@@ -526,6 +628,65 @@ namespace JBSLViewer.Models
             }
         }
 
+        private static bool IsRecentScoreFresh(string timeSet)
+        {
+            if (string.IsNullOrWhiteSpace(timeSet))
+                return false;
+            if (!DateTimeOffset.TryParse(timeSet, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
+                return false;
+
+            return DateTimeOffset.UtcNow - parsedTime <= ScoreSaberRecentFreshnessWindow;
+        }
+
+        private static bool IsBeatLeaderCompactMatch(VirtualMapState mapState, BeatLeaderCompactLeaderboardJson leaderboard)
+        {
+            if (mapState == null ||
+                leaderboard == null ||
+                string.IsNullOrWhiteSpace(mapState.Hash) ||
+                string.IsNullOrWhiteSpace(mapState.Characteristic) ||
+                string.IsNullOrWhiteSpace(mapState.Diff))
+                return false;
+            if (!TryMapDifficultyToBeatLeaderValue(mapState.Diff, out var difficulty))
+                return false;
+
+            return string.Equals(mapState.Hash, leaderboard.songHash, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(mapState.Characteristic, leaderboard.modeName, StringComparison.OrdinalIgnoreCase) &&
+                   leaderboard.difficulty == difficulty;
+        }
+
+        private static string CreateBeatLeaderMapKey(string songHash, string modeName, int difficulty)
+        {
+            if (string.IsNullOrWhiteSpace(songHash) || string.IsNullOrWhiteSpace(modeName))
+                return null;
+
+            return $"{songHash.Trim().ToUpperInvariant()}|{modeName.Trim()}|{difficulty}";
+        }
+
+        private static bool TryMapDifficultyToBeatLeaderValue(string difficultyName, out int difficulty)
+        {
+            switch (difficultyName)
+            {
+                case "Easy":
+                    difficulty = 1;
+                    return true;
+                case "Normal":
+                    difficulty = 3;
+                    return true;
+                case "Hard":
+                    difficulty = 5;
+                    return true;
+                case "Expert":
+                    difficulty = 7;
+                    return true;
+                case "ExpertPlus":
+                    difficulty = 9;
+                    return true;
+                default:
+                    difficulty = 0;
+                    return false;
+            }
+        }
+
         private LeaderboardJson BuildVirtualLeaderboardIfNeeded(int leagueId, VirtualLeagueState state, LeaderboardJson sourceLeaderboard, bool force)
         {
             if (sourceLeaderboard == null)
@@ -569,7 +730,6 @@ namespace JBSLViewer.Models
                         var rawScore = RecoverRawScore(sourceScore.acc, webMaxScore);
                         var clonedScore = CloneScore(sourceScore);
                         clonedScore.rawScore = rawScore;
-                        clonedScore.acc = this.CalculateAccuracy(rawScore, selectedMaxScore, webMaxScore, sourceScore.acc);
                         scoreEntries.Add(new VirtualScoreEntry(clonedScore, rawScore, sourceScore.standing));
                     }
                 }

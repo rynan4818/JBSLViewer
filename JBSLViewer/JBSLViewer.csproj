@@ -133,6 +133,7 @@
     <Compile Include="Installers\JBSLViewerMenuInstaller.cs" />
     <Compile Include="Installers\JBSLViewerPlayerInstaller.cs" />
     <Compile Include="Models\ActiveLeague.cs" />
+    <Compile Include="Models\BeatLeader\BeatLeaderCompactScoresJson.cs" />
     <Compile Include="Models\BeatLeader\BeatLeaderScoreJson.cs" />
     <Compile Include="Models\LatestUpdate.cs" />
     <Compile Include="Models\Leaderboard.cs" />

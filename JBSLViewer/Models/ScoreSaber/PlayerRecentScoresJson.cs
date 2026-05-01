@@ -19,11 +19,14 @@ namespace JBSLViewer.Models.ScoreSaber
         public int modifiedScore { get; set; }
         public int badCuts { get; set; }
         public int missedNotes { get; set; }
+        public string timeSet { get; set; }
     }
 
     public class ScoreSaberRecentLeaderboardJson
     {
         public int id { get; set; }
+        public string songHash { get; set; }
+        public Difficulty difficulty { get; set; }
         public int maxScore { get; set; }
     }
 }
