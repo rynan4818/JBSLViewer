@@ -23,7 +23,6 @@ namespace JBSLViewer.Views
         private static readonly Color32 SelfColor = new Color32(90, 210, 255, 255);
         private static readonly Color32 ValidColor = new Color32(110, 255, 145, 255);
         private static readonly Color32 InvalidColor = new Color32(150, 150, 150, 255);
-        private const int TheoreticalBaseOffset = 3;
 
         public bool _init = false;
         public int _page = 0;
@@ -36,6 +35,8 @@ namespace JBSLViewer.Views
         private readonly Leaderboard _leaderboard;
         [Inject]
         private readonly LeaderboardPanelViewController _leaderboardPanelViewController;
+        [Inject]
+        private readonly VirtualLeagueService _virtualLeagueService;
 
         [UIComponent("list")]
         public readonly CustomCellListTableData _list;
@@ -130,16 +131,23 @@ namespace JBSLViewer.Views
             if (!int.TryParse(this._leaderboardPanelViewController.LeaderboardValue, out var index))
                 return;
 
+            var displayLeaderboard = this._virtualLeagueService.GetLeaderboardForDisplay(leagueID);
+            if (displayLeaderboard == null)
+                displayLeaderboard = this._leaderboard.GetLeaderboardData(leagueID);
+            if (displayLeaderboard == null)
+                return;
+
             List<Score> scores;
             if (index == 0)
-                scores = this._leaderboard.GetTotalLeaderboard(leagueID);
+                scores = displayLeaderboard.total_rank;
             else
-                scores = this._leaderboard.GetMapLeaderboard(leagueID, index - 1);
+                scores = index - 1 >= 0 && index - 1 < (displayLeaderboard.maps?.Count ?? 0) ? displayLeaderboard.maps[index - 1].scores : null;
             if (scores == null)
                 return;
 
-            var validityContext = this._leaderboard.BuildValidityContext(leagueID, Math.Max(this._activeLeague.GetLeagueMaxValid(leagueID), 0));
-            var totalMaxPos = BuildTotalMaxPos(scores?.Count ?? 0, Math.Max(this._activeLeague.GetLeagueMaxValid(leagueID), 0));
+            var maxValid = Math.Max(this._activeLeague.GetLeagueMaxValid(leagueID), 0);
+            var validityContext = this._leaderboard.BuildValidityContext(displayLeaderboard, maxValid);
+            var totalMaxPos = Leaderboard.BuildTotalMaxPos(Leaderboard.InferLeagueBasePosFromMaps(displayLeaderboard), maxValid);
             var maxPage = Math.Max(0, (scores.Count - 1) / 10);
             if (maxPage < this._page)
                 this._page = maxPage;
@@ -196,14 +204,6 @@ namespace JBSLViewer.Views
         private bool IsCurrentUser(string sid)
         {
             return !string.IsNullOrEmpty(this._selfSid) && string.Equals(this._selfSid, sid, StringComparison.Ordinal);
-        }
-
-        private static int BuildTotalMaxPos(int playerCount, int maxValid)
-        {
-            if (playerCount <= 0 || maxValid <= 0)
-                return 0;
-
-            return maxValid * (playerCount + TheoreticalBaseOffset);
         }
 
         private static string FormatTotalRatio(int totalPos, int totalMaxPos)

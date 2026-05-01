@@ -16,7 +16,7 @@
         //public bool isOpen { get; set; }
         //public bool isPublic { get; set; }
         //public bool isLive { get; set; }
-        //public int? playlist_id { get; set; }
+        public int? playlist_id { get; set; }
         //public int? first_id { get; set; }
         //public int? second_id { get; set; }
         //public int? third_id { get; set; }

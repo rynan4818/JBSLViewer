@@ -14,10 +14,15 @@ namespace JBSLViewer.Configuration
         public virtual int selectLeagueID { get; set; } = -1; // 選択中のリーグID
         public virtual string leaderboardApiUrl { get; set; } = "https://jbsl-web.herokuapp.com/leaderboard/api/";
         public virtual string activeLeagueApiUrl { get; set; } = "https://jbsl-web.herokuapp.com/api/active_league";
+        public virtual string playlistSongsApiUrl { get; set; } = "https://jbsl-web.herokuapp.com/api/playlist_songs/";
         public virtual string headlinesUrl { get; set; } = "https://jbsl-web.herokuapp.com/headlines/1";
         public virtual string leaderboardInfoUrlHeader { get; set; } = "https://scoresaber.com/api/leaderboard/by-id/";
         public virtual string leaderboardInfoUrlFooter { get; set; } = "/info";
+        public virtual string scoreSaberPlayerUrlHeader { get; set; } = "https://scoresaber.com/api/player/";
+        public virtual string scoreSaberPlayerUrlFooter { get; set; } = "/full";
+        public virtual string scoreSaberRecentScoresUrlFooter { get; set; } = "/scores?sort=recent";
         public virtual string headlineLatest { get; set; } = @"（(\d{1,4})年(\d{1,2})月(\d{1,2})日(\d{1,2}:\d{1,2})）"; // ヘッドラインの日付正規表現
+        public virtual bool useScoreSaberMaxScoreForVirtualLeague { get; set; } = true; // バーチャル参加の精度計算でScoreSaberのmaxScoreを優先する
 
         /// <summary>
         /// これは、BSIPAが設定ファイルを読み込むたびに（ファイルの変更が検出されたときを含めて）呼び出されます

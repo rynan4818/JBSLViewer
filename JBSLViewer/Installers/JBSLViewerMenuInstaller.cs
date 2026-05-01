@@ -11,7 +11,9 @@ namespace JBSLViewer.Installers
         {
             this.Container.BindInterfacesAndSelfTo<LeaderboardPanelViewController>().FromNewComponentAsViewController().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<LeaderboardMainViewController>().FromNewComponentAsViewController().AsSingle().NonLazy();
+            this.Container.BindInterfacesAndSelfTo<JBSLViewerSettingView>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<LeaderboardRegisterer>().AsSingle();
+            this.Container.BindInterfacesAndSelfTo<VirtualLeagueScoreUploadWatcher>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<UIManager>().AsSingle();
         }
     }

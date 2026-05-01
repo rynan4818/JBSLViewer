@@ -34,8 +34,16 @@ namespace JBSLViewer.Views
 
         private bool _suppressLeagueSelectionChanged = false;
         private bool _suppressLeaderboardSelectionChanged = false;
+        private bool _suppressVirtualParticipationChanged = false;
         private bool _isLeagueLoading = true;
         private bool _isLeaderboardLoading = true;
+        private bool _isVirtualParticipationLoading = false;
+        private bool _virtualEventsSubscribed = false;
+        private bool _virtualParticipationEnabled = false;
+        private bool _virtualProgressActive = false;
+        private int _virtualProgressLeagueId = -1;
+        private int _virtualProgressCompleted = 0;
+        private int _virtualProgressTotal = 0;
 
         [Inject]
         private readonly ActiveLeague _activeLeague;
@@ -47,9 +55,12 @@ namespace JBSLViewer.Views
         private readonly LeaderboardInfo _leaderboardInfo;
         [Inject]
         private readonly LeaderboardMainViewController _leaderboardMainViewController;
+        [Inject]
+        private readonly VirtualLeagueService _virtualLeagueService;
 
         public async Task InitializeAsync(CancellationToken token)
         {
+            this.EnsureVirtualLeagueEventSubscription();
             await this.AllResetAsync();
         }
 
@@ -67,6 +78,11 @@ namespace JBSLViewer.Views
             this.RfreshTimeUpdate();
             if (this._leaderboardMainViewController.TryRefreshCurrentUserSid())
                 this._leaderboardMainViewController.SetRecords();
+            if (this._virtualLeagueService.TryRefreshCurrentUser())
+            {
+                this.SyncVirtualParticipationValue();
+                this.UpdateControlInteractivity();
+            }
             if (LeaderboardInfoSemaphore.CurrentCount == 0 || AllResetSemaphore.CurrentCount == 0 || SetLeaderboardSemaphore.CurrentCount == 0)
                 return;
             if (!int.TryParse(this._jbslLeagueValue, out var leagueID) || leagueID == -1)
@@ -107,6 +123,7 @@ namespace JBSLViewer.Views
                 if (this._activeLeague.GetLeagueIndex(PluginConfig.Instance.selectLeagueID) == -1)
                     PluginConfig.Instance.selectLeagueID = this._activeLeague._leagues[0].id;
                 this.SetLeagueValueInternal(PluginConfig.Instance.selectLeagueID.ToString());
+                this.SyncVirtualParticipationValue();
                 if (this._init)
                     this.RefreshLeagueDropdown();
             }
@@ -160,6 +177,7 @@ namespace JBSLViewer.Views
                 for (var i = 0; i <= leaderboard.maps.Count; i++)
                     leaderboardChoices.Add(i.ToString());
                 this.SetChoices(this.LeaderboardChoices, leaderboardChoices, PlaceholderLeaderboardId);
+                this._virtualLeagueService.SyncLeagueParticipationState(leagueID);
                 if (!this.LeaderboardChoices.Contains(indexString))
                     indexString = this.LeaderboardChoices.Contains("0") ? "0" : this.LeaderboardChoices[0] as string;
                 resolvedIndexString = indexString;
@@ -199,6 +217,10 @@ namespace JBSLViewer.Views
                 if (this._init)
                     this.UpdateControlInteractivity();
             }
+
+            this.SyncVirtualParticipationValue();
+            if (this._init)
+                this.UpdateControlInteractivity();
         }
 
         public async Task LeagueReloadAsync()
@@ -221,9 +243,22 @@ namespace JBSLViewer.Views
 
         public void RfreshTimeUpdate()
         {
+            if (!this._init)
+                return;
+
+            if (this._virtualProgressActive &&
+                int.TryParse(this._jbslLeagueValue, out var currentLeagueId) &&
+                currentLeagueId == this._virtualProgressLeagueId)
+            {
+                var progress = this._virtualProgressTotal <= 0
+                    ? 0f
+                    : Mathf.Clamp01((float)this._virtualProgressCompleted / this._virtualProgressTotal) * 100f;
+                this._autoReloadTimer.text = $"Loading Virtual Scores {progress:F2} %";
+                return;
+            }
+
             var time = (this._latestUpdate._latest + TimeSpan.FromMinutes(PluginConfig.Instance.refreshInterval) - DateTime.Now).ToString(@"mm\:ss");
-            if (this._init)
-                this._autoReloadTimer.text = $"Auto Reload Timer {time}";
+            this._autoReloadTimer.text = $"Auto Reload Timer {time}";
         }
 
         public string GetLeaderboardName()
@@ -268,6 +303,9 @@ namespace JBSLViewer.Views
         [UIComponent("TotalButton")]
         private readonly Button _totalButton;
 
+        [UIComponent("VirtualParticipationToggle")]
+        private readonly RectTransform _virtualParticipationTransform;
+
         [UIValue("JBSLLeagueChoices")]
         public List<object> JBSLLeagueChoices { get; set; } = new List<object> { PlaceholderLeagueId };
 
@@ -310,6 +348,20 @@ namespace JBSLViewer.Views
                     this._leaderboardMainViewController.SetTitle("");
                 else
                     this._leaderboardMainViewController.SetTitle(this.LeaderboardFormat(value));
+            }
+        }
+
+        [UIValue("VirtualParticipationEnabled")]
+        public bool VirtualParticipationEnabled
+        {
+            get => this._virtualParticipationEnabled;
+            set
+            {
+                if (this._suppressVirtualParticipationChanged || this._virtualParticipationEnabled == value)
+                    return;
+
+                this._virtualParticipationEnabled = value;
+                _ = this.SetVirtualParticipationEnabledAsync(value);
             }
         }
 
@@ -395,8 +447,11 @@ namespace JBSLViewer.Views
             leaderboardLabel.fontSize = 2f;
             leaderboardLabel.enableWordWrapping = true;
             leaderboardLabel.overflowMode = TextOverflowModes.Ellipsis;
+            if (this._virtualParticipationTransform != null && this._virtualParticipationTransform.GetComponent<CanvasGroup>() == null)
+                this._virtualParticipationTransform.gameObject.AddComponent<CanvasGroup>();
             this.RefreshLeagueDropdown();
             this.RefreshLeaderboardDropdown();
+            this.SyncVirtualParticipationValue();
             this.UpdateControlInteractivity();
             this._leaderboardMainViewController.SetTitle();
         }
@@ -412,6 +467,7 @@ namespace JBSLViewer.Views
             {
                 this._suppressLeagueSelectionChanged = false;
             }
+            this.SyncVirtualParticipationValue();
         }
 
         private void SetLeaderboardValueInternal(string value)
@@ -472,20 +528,157 @@ namespace JBSLViewer.Views
             if (!this._init)
                 return;
 
-            var isBusy = LeaderboardInfoSemaphore.CurrentCount == 0 || AllResetSemaphore.CurrentCount == 0 || SetLeaderboardSemaphore.CurrentCount == 0;
+            var isBusy = LeaderboardInfoSemaphore.CurrentCount == 0 || AllResetSemaphore.CurrentCount == 0 || SetLeaderboardSemaphore.CurrentCount == 0 || this._isVirtualParticipationLoading;
             var hasLeagueData = !this.IsPlaceholderOnly(this.JBSLLeagueChoices, PlaceholderLeagueId);
             var hasLeaderboardData = !this.IsPlaceholderOnly(this.LeaderboardChoices, PlaceholderLeaderboardId);
+            var hasVirtualParticipation = false;
+            if (hasLeagueData && int.TryParse(this._jbslLeagueValue, out var leagueID) && leagueID != -1)
+                hasVirtualParticipation = this._virtualLeagueService.IsVirtualParticipationAvailable(leagueID);
 
             this._jbslLeagueSetting.interactable = !isBusy && hasLeagueData;
             this._leaderboardSetting.interactable = !isBusy && hasLeaderboardData;
             this._leagueReloadButton.interactable = !isBusy;
             this._reloadButton.interactable = !isBusy && hasLeagueData;
             this._totalButton.interactable = !isBusy && this.LeaderboardChoices.Contains("0");
+            if (this._virtualParticipationTransform != null)
+            {
+                foreach (var selectable in this._virtualParticipationTransform.GetComponentsInChildren<Selectable>(true))
+                    selectable.interactable = !isBusy && hasVirtualParticipation;
+
+                var canvasGroup = this._virtualParticipationTransform.GetComponent<CanvasGroup>();
+                if (canvasGroup != null)
+                    canvasGroup.alpha = hasVirtualParticipation ? 1f : 0.45f;
+            }
         }
 
         private bool IsPlaceholderOnly(List<object> choices, string placeholderValue)
         {
             return choices.Count == 1 && string.Equals(choices[0] as string, placeholderValue, StringComparison.Ordinal);
+        }
+
+        private async Task SetVirtualParticipationEnabledAsync(bool enabled)
+        {
+            if (this._isVirtualParticipationLoading)
+                return;
+
+            if (!int.TryParse(this._jbslLeagueValue, out var leagueID) || leagueID == -1)
+            {
+                this.SyncVirtualParticipationValue();
+                return;
+            }
+
+            if (enabled && !this._virtualLeagueService.IsVirtualParticipationAvailable(leagueID))
+            {
+                this.SyncVirtualParticipationValue();
+                this.UpdateControlInteractivity();
+                return;
+            }
+
+            this._isVirtualParticipationLoading = true;
+            this.UpdateControlInteractivity();
+            try
+            {
+                await this._virtualLeagueService.SetVirtualParticipationEnabledAsync(leagueID, enabled);
+            }
+            finally
+            {
+                this._isVirtualParticipationLoading = false;
+                this.SyncVirtualParticipationValue();
+                this.UpdateControlInteractivity();
+                this._leaderboardMainViewController.SetRecords();
+            }
+        }
+
+        private void SyncVirtualParticipationValue()
+        {
+            var value = false;
+            if (int.TryParse(this._jbslLeagueValue, out var leagueID) && leagueID != -1)
+            {
+                this._virtualLeagueService.SyncLeagueParticipationState(leagueID);
+                value = this._virtualLeagueService.IsVirtualParticipationEnabled(leagueID);
+            }
+
+            this._suppressVirtualParticipationChanged = true;
+            try
+            {
+                this._virtualParticipationEnabled = value;
+            }
+            finally
+            {
+                this._suppressVirtualParticipationChanged = false;
+            }
+
+            if (this._init)
+                this.NotifyPropertyChanged(nameof(this.VirtualParticipationEnabled));
+
+            this.SyncVirtualProgressState();
+        }
+
+        private void EnsureVirtualLeagueEventSubscription()
+        {
+            if (this._virtualEventsSubscribed)
+                return;
+
+            this._virtualLeagueService.VirtualLeaderboardUpdated += this.HandleVirtualLeaderboardUpdated;
+            this._virtualLeagueService.VirtualAvailabilityChanged += this.HandleVirtualAvailabilityChanged;
+            this._virtualLeagueService.VirtualParticipationProgressChanged += this.HandleVirtualParticipationProgressChanged;
+            this._virtualEventsSubscribed = true;
+        }
+
+        private void HandleVirtualLeaderboardUpdated(int leagueId)
+        {
+            if (!int.TryParse(this._jbslLeagueValue, out var currentLeagueId) || currentLeagueId != leagueId)
+                return;
+
+            this.SyncVirtualParticipationValue();
+            this.UpdateControlInteractivity();
+            this._leaderboardMainViewController.SetRecords();
+        }
+
+        private void HandleVirtualAvailabilityChanged(int leagueId)
+        {
+            if (!int.TryParse(this._jbslLeagueValue, out var currentLeagueId) || currentLeagueId != leagueId)
+                return;
+
+            this.SyncVirtualParticipationValue();
+            this.UpdateControlInteractivity();
+        }
+
+        private void HandleVirtualParticipationProgressChanged(int leagueId, int completedMaps, int totalMaps, bool isActive)
+        {
+            this._virtualProgressLeagueId = leagueId;
+            this._virtualProgressCompleted = completedMaps;
+            this._virtualProgressTotal = totalMaps;
+            this._virtualProgressActive = isActive;
+
+            if (!int.TryParse(this._jbslLeagueValue, out var currentLeagueId) || currentLeagueId != leagueId)
+                return;
+
+            this.RfreshTimeUpdate();
+        }
+
+        private void SyncVirtualProgressState()
+        {
+            var leagueId = -1;
+            if (int.TryParse(this._jbslLeagueValue, out var currentLeagueId) && currentLeagueId != -1)
+                leagueId = currentLeagueId;
+
+            if (leagueId != -1 && this._virtualLeagueService.TryGetVirtualParticipationProgress(leagueId, out var completedMaps, out var totalMaps, out var isActive))
+            {
+                this._virtualProgressLeagueId = leagueId;
+                this._virtualProgressCompleted = completedMaps;
+                this._virtualProgressTotal = totalMaps;
+                this._virtualProgressActive = isActive;
+            }
+            else
+            {
+                this._virtualProgressLeagueId = leagueId;
+                this._virtualProgressCompleted = 0;
+                this._virtualProgressTotal = 0;
+                this._virtualProgressActive = false;
+            }
+
+            this.RfreshTimeUpdate();
         }
     }
 }

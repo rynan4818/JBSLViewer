@@ -75,13 +75,27 @@ namespace JBSLViewer.Models
             return this._leaderboards[leagueID].maps;
         }
 
+        public LeaderboardJson GetLeaderboardData(int leagueID)
+        {
+            if (leagueID == -1 || !this._leaderboards.ContainsKey(leagueID))
+                return null;
+            return this._leaderboards[leagueID];
+        }
+
         public LeaderboardValidityContext BuildValidityContext(int leagueID, int maxValid)
         {
+            if (leagueID == -1 || !this._leaderboards.ContainsKey(leagueID))
+                return new LeaderboardValidityContext();
+            return this.BuildValidityContext(this._leaderboards[leagueID], maxValid);
+        }
+
+        public LeaderboardValidityContext BuildValidityContext(LeaderboardJson leaderboard, int maxValid)
+        {
             var context = new LeaderboardValidityContext();
-            if (leagueID == -1 || maxValid < 0 || !this._leaderboards.ContainsKey(leagueID))
+            if (leaderboard == null || maxValid < 0)
                 return context;
 
-            var maps = this._leaderboards[leagueID].maps;
+            var maps = leaderboard.maps;
             if (maps == null || maps.Count == 0)
                 return context;
 
@@ -129,6 +143,31 @@ namespace JBSLViewer.Models
             }
 
             return context;
+        }
+
+        public static int InferLeagueBasePosFromMaps(LeaderboardJson leaderboard)
+        {
+            var inferredBasePos = 0;
+            if (leaderboard?.maps != null)
+            {
+                foreach (var map in leaderboard.maps)
+                {
+                    if (map?.scores == null || map.scores.Count <= 0)
+                        continue;
+                    // slope(1) == 0, so the first-place pos is equivalent to league.player.count() + 3.
+                    if (map.scores[0] != null && map.scores[0].pos > inferredBasePos)
+                        inferredBasePos = map.scores[0].pos;
+                }
+            }
+
+            return inferredBasePos;
+        }
+
+        public static int BuildTotalMaxPos(int basePos, int maxValid)
+        {
+            if (basePos <= 0 || maxValid <= 0)
+                return 0;
+            return maxValid * basePos;
         }
 
         private static string BuildTooltip(IEnumerable<LeaderboardMapScoreContext> scores, Func<LeaderboardMapScoreContext, string> selector)

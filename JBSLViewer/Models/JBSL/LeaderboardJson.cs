@@ -31,5 +31,6 @@ namespace JBSLViewer.Models.JBSL
         public float acc { get; set; }
         public int pos { get; set; }
         public int miss { get; set; }
+        public int rawScore { get; set; }
     }
 }

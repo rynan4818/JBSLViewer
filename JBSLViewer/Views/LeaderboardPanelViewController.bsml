@@ -5,6 +5,12 @@
       <dropdown-list-setting id="LeaderboardID" text="Leaderboard" choices="LeaderboardChoices" value="LeaderboardValue" formatter="LeaderboardFormatter" bind-value="true" apply-on-change="true"/>
     </vertical>
   </horizontal>
+  <horizontal anchor-pos-x="43" anchor-pos-y="10">
+    <text text="Virtual Score"/>
+  </horizontal>
+  <horizontal pref-width="18" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" anchor-pos-y="5">
+    <toggle-setting id="VirtualParticipationToggle" text="" value="VirtualParticipationEnabled" apply-on-change="true"/>
+  </horizontal>
   <horizontal anchor-pos-x="2" anchor-pos-y="-3">
     <button id="TotalButton" font-size="3" text="TOTAL" on-click="Total"/>
   </horizontal>

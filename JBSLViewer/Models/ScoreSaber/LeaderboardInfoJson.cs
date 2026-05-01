@@ -13,8 +13,8 @@ namespace JBSLViewer.Models.ScoreSaber
         //public string songSubName { get; set; }
         //public string songAuthorName { get; set; }
         //public string levelAuthorName { get; set; }
-        //public Difficulty difficulty { get; set; }
-        //public int maxScore { get; set; }
+        public Difficulty difficulty { get; set; }
+        public int maxScore { get; set; }
         //public DateTime createdDate { get; set; }
         //public object rankedDate { get; set; }
         //public object qualifiedDate { get; set; }
@@ -36,7 +36,7 @@ namespace JBSLViewer.Models.ScoreSaber
     {
         //public int leaderboardId { get; set; }
         //public int difficulty { get; set; }
-        //public string gameMode { get; set; }
-        //public string difficultyRaw { get; set; }
+        public string gameMode { get; set; }
+        public string difficultyRaw { get; set; }
     }
 }
