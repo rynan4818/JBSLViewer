@@ -304,6 +304,9 @@ namespace JBSLViewer.Views
         private readonly Button _totalButton;
 
         [UIComponent("VirtualParticipationToggle")]
+        private readonly ToggleSetting _virtualParticipationSetting;
+
+        [UIComponent("VirtualParticipationToggle")]
         private readonly RectTransform _virtualParticipationTransform;
 
         [UIValue("JBSLLeagueChoices")]
@@ -324,6 +327,9 @@ namespace JBSLViewer.Views
                     return;
 
                 this._jbslLeagueValue = value;
+                this.SyncVirtualParticipationValue();
+                if (this._init)
+                    this.UpdateControlInteractivity();
                 if (this._suppressLeagueSelectionChanged || value == PlaceholderLeagueId)
                     return;
                 if (LeaderboardInfoSemaphore.CurrentCount == 0 || AllResetSemaphore.CurrentCount == 0 || SetLeaderboardSemaphore.CurrentCount == 0)
@@ -610,6 +616,7 @@ namespace JBSLViewer.Views
 
             if (this._init)
                 this.NotifyPropertyChanged(nameof(this.VirtualParticipationEnabled));
+            this._virtualParticipationSetting?.ReceiveValue();
 
             this.SyncVirtualProgressState();
         }

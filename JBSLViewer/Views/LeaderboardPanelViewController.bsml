@@ -9,7 +9,7 @@
     <text text="Virtual Score"/>
   </horizontal>
   <horizontal pref-width="18" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" anchor-pos-y="5">
-    <toggle-setting id="VirtualParticipationToggle" text="" value="VirtualParticipationEnabled" apply-on-change="true"/>
+    <toggle-setting id="VirtualParticipationToggle" text="" value="VirtualParticipationEnabled" bind-value="true" apply-on-change="true"/>
   </horizontal>
   <horizontal anchor-pos-x="2" anchor-pos-y="-3">
     <button id="TotalButton" font-size="3" text="TOTAL" on-click="Total"/>
