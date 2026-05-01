@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using BS_Utils.Gameplay;
 using HMUI;
 using TMPro;
@@ -26,7 +27,7 @@ namespace JBSLViewer.Views
 
         public bool _init = false;
         public int _page = 0;
-        private bool _selfSidRequested = false;
+        private Task<string> _selfSidTask;
         private string _selfSid;
 
         [Inject]
@@ -102,18 +103,38 @@ namespace JBSLViewer.Views
             if (!string.IsNullOrEmpty(this._selfSid))
                 return false;
 
-            if (!this._selfSidRequested)
+            if (this._selfSidTask == null)
+                this._selfSidTask = FetchCurrentUserSidAsync();
+            if (!this._selfSidTask.IsCompleted)
+                return false;
+
+            string sid;
+            try
             {
-                GetUserInfo.UpdateUserInfo();
-                this._selfSidRequested = true;
+                sid = this._selfSidTask.GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log?.Error(ex.ToString());
+                this._selfSidTask = null;
+                return false;
             }
 
-            var sid = GetUserInfo.GetUserID();
             if (string.IsNullOrEmpty(sid) || string.Equals(this._selfSid, sid, StringComparison.Ordinal))
+            {
+                if (string.IsNullOrEmpty(sid))
+                    this._selfSidTask = null;
                 return false;
+            }
 
             this._selfSid = sid;
             return true;
+        }
+
+        private static async Task<string> FetchCurrentUserSidAsync()
+        {
+            var userInfo = await GetUserInfo.GetUserAsync();
+            return userInfo?.platformUserId;
         }
 
         public void SetRecords()

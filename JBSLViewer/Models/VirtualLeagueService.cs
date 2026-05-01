@@ -23,7 +23,7 @@ namespace JBSLViewer.Models
         private readonly SemaphoreSlim _updateSemaphore = new SemaphoreSlim(1, 1);
         private readonly Dictionary<int, VirtualLeagueState> _leagueStates = new Dictionary<int, VirtualLeagueState>();
         private bool _disposedValue;
-        private bool _userLookupRequested;
+        private Task<string> _selfSidTask;
         private string _selfSid;
         private string _selfName;
         private static readonly TimeSpan ScoreSaberRecentFreshnessWindow = TimeSpan.FromMinutes(10);
@@ -41,22 +41,30 @@ namespace JBSLViewer.Models
 
         public bool TryRefreshCurrentUser()
         {
-            if (!this._userLookupRequested)
-            {
-                GetUserInfo.UpdateUserInfo();
-                this._userLookupRequested = true;
-            }
-
-            var sid = GetUserInfo.GetUserID();
-            if (string.IsNullOrEmpty(sid) || string.Equals(this._selfSid, sid, StringComparison.Ordinal))
+            if (this._selfSidTask == null)
+                this._selfSidTask = FetchCurrentUserSidAsync();
+            if (!this._selfSidTask.IsCompleted)
                 return false;
 
-            this._selfSid = sid;
-            this._selfName = null;
-            foreach (var state in this._leagueStates.Values)
-                state.Dirty = true;
-            this.RaiseAvailabilityChanged(this._leagueStates.Keys);
-            return true;
+            string sid;
+            try
+            {
+                sid = this._selfSidTask.GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log?.Error(ex.ToString());
+                this._selfSidTask = null;
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(sid))
+            {
+                this._selfSidTask = null;
+                return false;
+            }
+
+            return this.ApplyCurrentUserSid(sid);
         }
 
         public bool IsVirtualParticipationAvailable(int leagueId)
@@ -139,7 +147,7 @@ namespace JBSLViewer.Models
                 return;
             }
 
-            this.TryRefreshCurrentUser();
+            await this.EnsureCurrentUserSidAsync();
             if (!this.IsVirtualParticipationAvailable(leagueId))
             {
                 this.RaiseAvailabilityChanged(leagueId);
@@ -178,7 +186,7 @@ namespace JBSLViewer.Models
             if (!this._leagueStates.Values.Any(x => x.Initialized))
                 return;
 
-            this.TryRefreshCurrentUser();
+            await this.EnsureCurrentUserSidAsync();
             if (string.IsNullOrEmpty(this._selfSid))
                 return;
 
@@ -370,6 +378,55 @@ namespace JBSLViewer.Models
                 if (!string.IsNullOrWhiteSpace(playerInfo?.name))
                     this._selfName = playerInfo.name;
             }
+        }
+
+        private async Task<bool> EnsureCurrentUserSidAsync()
+        {
+            if (!string.IsNullOrEmpty(this._selfSid))
+                return true;
+
+            if (this._selfSidTask == null)
+                this._selfSidTask = FetchCurrentUserSidAsync();
+
+            string sid;
+            try
+            {
+                sid = await this._selfSidTask;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log?.Error(ex.ToString());
+                this._selfSidTask = null;
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(sid))
+            {
+                this._selfSidTask = null;
+                return false;
+            }
+
+            this.ApplyCurrentUserSid(sid);
+            return !string.IsNullOrEmpty(this._selfSid);
+        }
+
+        private bool ApplyCurrentUserSid(string sid)
+        {
+            if (string.IsNullOrEmpty(sid) || string.Equals(this._selfSid, sid, StringComparison.Ordinal))
+                return false;
+
+            this._selfSid = sid;
+            this._selfName = null;
+            foreach (var state in this._leagueStates.Values)
+                state.Dirty = true;
+            this.RaiseAvailabilityChanged(this._leagueStates.Keys);
+            return true;
+        }
+
+        private static async Task<string> FetchCurrentUserSidAsync()
+        {
+            var userInfo = await GetUserInfo.GetUserAsync();
+            return userInfo?.platformUserId;
         }
 
         private async Task EnsurePlaylistSongsAsync(VirtualLeagueState state)
