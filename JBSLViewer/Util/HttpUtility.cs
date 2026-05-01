@@ -9,7 +9,7 @@ namespace JBSLViewer.Util
     {
         public static readonly HttpClient httpClient = new HttpClient();
         public static bool Init = false;
-        public static async Task<string> GetHttpContentAsync(string url)
+        public static async Task<string> GetHttpContentAsync(string url, bool httpErrNoLog = false)
         {
             var assenblyName = Assembly.GetExecutingAssembly().GetName();
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -24,7 +24,8 @@ namespace JBSLViewer.Util
             }
             catch (HttpRequestException e)
             {
-                Plugin.Log.Error($"{url} Http Error : {e.Message}");
+                if (!httpErrNoLog)
+                    Plugin.Log.Error($"{url} Http Error : {e.Message}");
                 return null;
             }
             catch (TaskCanceledException e)

@@ -12,6 +12,7 @@ namespace JBSLViewer.Installers
             this.Container.BindInterfacesAndSelfTo<Leaderboard>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<LatestUpdate>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<LeaderboardInfo>().AsSingle().NonLazy();
+            this.Container.BindInterfacesAndSelfTo<VirtualLeagueService>().AsSingle().NonLazy();
         }
     }
 }

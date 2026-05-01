@@ -9,14 +9,14 @@
         //public int? owner_id { get; set; }
         //public string description { get; set; }
         //public string color { get; set; }
-        //public int max_valid { get; set; }
+        public int max_valid { get; set; }
         //public float limit { get; set; }
         //public string end { get; set; }
         //public bool isPermanent { get; set; }
         //public bool isOpen { get; set; }
         //public bool isPublic { get; set; }
         //public bool isLive { get; set; }
-        //public int? playlist_id { get; set; }
+        public int? playlist_id { get; set; }
         //public int? first_id { get; set; }
         //public int? second_id { get; set; }
         //public int? third_id { get; set; }
