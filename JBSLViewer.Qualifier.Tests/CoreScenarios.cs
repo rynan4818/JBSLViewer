@@ -42,7 +42,7 @@ namespace JBSLViewer.Qualifier.Tests {
         }
         private static async Task ReservationGameVersion() {
             using(var r=new Rig()) {
-                const string version="1.39.1_1715";
+                const string version="1.42.0_12297";
                 r.Coordinator.GameVersion=version;
                 string sent=null;
                 r.Api.Result=(session,challenge,metadata,replay,key)=> {
@@ -67,7 +67,7 @@ namespace JBSLViewer.Qualifier.Tests {
             using(var r=new Rig()) {
                 var context=r.Context();
                 foreach(var endType in new[]{"clear","fail"}) {
-                    foreach(var version in new[]{"1.39.1","1.39.1_1715","1.39.1_1234567890"}) {
+                    foreach(var version in new[]{"1.42.0","1.42.0_12297","1.42.0_1234567890"}) {
                         var observed=new ResultMetadata {GameVersion=version};
                         var result=QualifierResultFactory.Create(context,endType,observed,null,r.Clock);
                         var json=StrictJson.Object(StrictJson.Serialize(result.Metadata));
@@ -77,11 +77,11 @@ namespace JBSLViewer.Qualifier.Tests {
                 foreach(var version in new string[]{null,""," \t "}) {
                     var result=QualifierResultFactory.Create(context,"preflight_rejected",new ResultMetadata {GameVersion=version},null,r.Clock);
                     var json=StrictJson.Object(StrictJson.Serialize(result.Metadata));
-                    Program.Check((string)json["gameVersion"]=="1.39.1" && result.Metadata.ScoreValidity.InvalidReason=="preflight_rejected","preflight result supplies default for missing or blank game version");
+                    Program.Check((string)json["gameVersion"]=="1.42.0" && result.Metadata.ScoreValidity.InvalidReason=="preflight_rejected","preflight result supplies default for missing or blank game version");
                 }
                 var unobserved=QualifierResultFactory.Create(context,"preflight_rejected",null,null,r.Clock);
-                Program.Check(unobserved.Metadata.GameVersion=="1.39.1" && unobserved.Metadata.ScoreValidity.PlayInstanceCount==0,"unobserved preflight result retains default game version");
-                context.GameVersion="1.39.1_1715";
+                Program.Check(unobserved.Metadata.GameVersion=="1.42.0" && unobserved.Metadata.ScoreValidity.PlayInstanceCount==0,"unobserved preflight result retains default game version");
+                context.GameVersion="1.42.0_12297";
                 Program.Check(QualifierResultFactory.Create(context,"preflight_rejected",null,null,r.Clock).Metadata.GameVersion==context.GameVersion,"unobserved result preserves reservation game build");
                 Program.Check(QualifierResultFactory.Create(context,"preflight_rejected",new ResultMetadata {GameVersion=""},null,r.Clock).Metadata.GameVersion==context.GameVersion,"blank observed version falls back to reservation game build");
             }

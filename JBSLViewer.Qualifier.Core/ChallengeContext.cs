@@ -8,7 +8,7 @@ namespace JBSLViewer.Qualifier.Core {
         public string ScoreServerBaseUrl { get; set; }
         public string ReserveKey { get; set; }
         public string ClientVersion { get; set; }
-        public string GameVersion { get; set; } = "1.39.1";
+        public string GameVersion { get; set; } = "1.42.0";
         public string ClientResultId { get; set; } = Guid.NewGuid().ToString();
         public MapKey Map { get; set; }
         public DateTimeOffset ResultAcceptUntil { get; set; }

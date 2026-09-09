@@ -22,6 +22,7 @@ namespace JBSLViewer.Qualifier
         [Inject] private PlayerTransforms _transforms;
         [Inject] private BeatmapObjectManager _objects;
         [Inject] private BeatmapObjectSpawnController _spawn;
+        [Inject] private VariableMovementDataProvider _movement;
         [Inject] private AudioTimeSyncController _time;
         [Inject] private ScoreController _score;
         [Inject] private PlayerHeadAndObstacleInteraction _headObstacle;
@@ -74,7 +75,7 @@ namespace JBSLViewer.Qualifier
             info.environment = _setup.targetEnvironmentInfo.environmentName;
             info.leftHanded = _setup.playerSpecificSettings.leftHanded;
             info.height = _setup.playerSpecificSettings.automaticPlayerHeight ? 0 : _setup.playerSpecificSettings.playerHeight;
-            info.jumpDistance = _spawn.jumpDistance;
+            info.jumpDistance = _movement.jumpDistance;
             info.trackingSytem = _vr.vrPlatformSDK.ToString();
             var devices = new List<InputDevice>();
             InputDevices.GetDevicesAtXRNode(XRNode.Head, devices);
@@ -127,11 +128,11 @@ namespace JBSLViewer.Qualifier
             Quaternion(UnityEngine.Quaternion.Inverse(_origin.rotation) * transform.rotation));
         private static R.Vector3 Vector(UnityEngine.Vector3 v) => new R.Vector3(v.x, v.y, v.z);
         private static R.Quaternion Quaternion(UnityEngine.Quaternion q) => new R.Quaternion(q.x, q.y, q.z, q.w);
-        private void SpawnInitialized() { if (_recording) _replay.info.jumpDistance = _spawn.jumpDistance; }
+        private void SpawnInitialized() { if (_recording) _replay.info.jumpDistance = _movement.jumpDistance; }
         private void HeightChanged(float height)
         { if (_recording) _replay.heights.Add(new R.AutomaticHeight { height = height, time = _time.songTime }); }
 
-        private void NoteAdded(NoteData data, BeatmapObjectSpawnMovementData.NoteSpawnData spawn)
+        private void NoteAdded(NoteData data, NoteSpawnData spawn)
         {
             if (!_recording) return;
             _notes[data] = new R.NoteEvent {

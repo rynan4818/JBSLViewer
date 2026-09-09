@@ -40,7 +40,7 @@ namespace JBSLViewer.Qualifier.Core.Contracts {
         [JsonProperty("leagueId")] public int LeagueId { get; set; }
         [JsonProperty("map")] public MapKey Map { get; set; }
         [JsonProperty("clientVersion")] public string ClientVersion { get; set; }
-        [JsonProperty("gameVersion")] public string GameVersion { get; set; } = "1.39.1";
+        [JsonProperty("gameVersion")] public string GameVersion { get; set; } = "1.42.0";
     }
     public sealed class ReserveResponse {
         [JsonIgnore] public int ResponseHttpStatus { get; set; }
@@ -99,7 +99,7 @@ namespace JBSLViewer.Qualifier.Core.Contracts {
         [JsonProperty("diagnostics")] public ResultDiagnostics Diagnostics { get; set; } = new ResultDiagnostics();
         [JsonProperty("timing")] public ResultTiming Timing { get; set; } = new ResultTiming();
         [JsonProperty("clientVersion")] public string ClientVersion { get; set; }
-        [JsonProperty("gameVersion")] public string GameVersion { get; set; } = "1.39.1";
+        [JsonProperty("gameVersion")] public string GameVersion { get; set; } = "1.42.0";
     }
     public sealed class SubmissionEligibility {
         [JsonProperty("allowedAtStart")] public bool AllowedAtStart { get; set; }

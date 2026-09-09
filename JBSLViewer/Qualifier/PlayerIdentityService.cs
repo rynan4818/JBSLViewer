@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IPA.Utilities;
 using JBSLViewer.Qualifier.Core;
+using OculusStudios.Platform.Core;
 using UnityEngine;
 using Zenject;
 
@@ -15,9 +16,8 @@ namespace JBSLViewer.Qualifier
     public sealed class PlayerIdentityService : IPlatformTicketProvider, IInitializable, ITickable
     {
         private readonly QualifierDispatcher _dispatcher;
-        [InjectOptional] private IPlatformUserModel _platformUserModel;
+        [InjectOptional] private IPlatform _platform;
         private UserInfo _user;
-        private bool _refreshing;
         private float _nextPoll;
         public string CurrentSid => _user?.platformUserId;
         public string PlayerName => _user?.userName ?? "";
@@ -33,23 +33,25 @@ namespace JBSLViewer.Qualifier
             _ = RefreshAsync();
         }
         public Task<bool> RefreshAsync() => _dispatcher.RunAsync(() => RefreshOnMainAsync(CancellationToken.None));
-        private async Task<bool> RefreshOnMainAsync(CancellationToken cancellationToken)
+        private Task<bool> RefreshOnMainAsync(CancellationToken cancellationToken)
         {
-            if (_refreshing) return _user != null;
-            _refreshing = true;
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                if (_platformUserModel == null)
-                    _platformUserModel = Resources.FindObjectsOfTypeAll<PlatformLeaderboardsModel>()
-                        .Select(x => x.GetField<IPlatformUserModel, PlatformLeaderboardsModel>("_platformUserModel"))
+                if (_platform == null)
+                    _platform = Resources.FindObjectsOfTypeAll<PlatformLeaderboardsModel>()
+                        .Select(x => x.GetField<IPlatform, PlatformLeaderboardsModel>("_platform"))
                         .LastOrDefault(x => x != null);
-                var user = _platformUserModel == null ? null : await _platformUserModel.GetUserInfo(cancellationToken);
-                SetUser(user);
-                return user != null;
+                var user = _platform?.user;
+                if (user == null || user.userId == 0 || (_platform.vendor != Vendor.Valve && _platform.vendor != Vendor.Meta))
+                    SetUser(null);
+                else
+                    SetUser(new UserInfo(_platform.vendor == Vendor.Valve ? UserInfo.Platform.Steam : UserInfo.Platform.Oculus,
+                        user.userId.ToString(System.Globalization.CultureInfo.InvariantCulture), user.displayName));
+                return Task.FromResult(_user != null);
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception) { SetUser(null); return false; }
-            finally { _refreshing = false; }
+            catch (Exception) { SetUser(null); return Task.FromResult(false); }
         }
         private void SetUser(UserInfo user)
         {
@@ -66,13 +68,13 @@ namespace JBSLViewer.Qualifier
                 var user = _user;
                 if (user.platform == UserInfo.Platform.Steam)
                 {
-                    var token = await new PlatformAuthenticationTokenProvider(_platformUserModel, user).GetAuthenticationToken();
+                    var token = await new PlatformAuthenticationTokenProvider(_platform, user).GetAuthenticationToken();
                     cancellationToken.ThrowIfCancellationRequested();
                     return new PlatformTicket { Provider = "steamTicket", Ticket = token.sessionToken };
                 }
                 if (user.platform == UserInfo.Platform.Oculus)
                 {
-                    var token = await new PlatformAuthenticationTokenProvider(_platformUserModel, user)
+                    var token = await new PlatformAuthenticationTokenProvider(_platform, user)
                         .GetXPlatformAccessToken(cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                     return new PlatformTicket { Provider = "oculusTicket", Ticket = token.token };

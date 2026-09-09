@@ -116,7 +116,7 @@ try {
     $manifest = $plugin.MainModule.Resources | Where-Object Name -EQ 'JBSLViewer.manifest.json'
     $reader = [IO.StreamReader]::new($manifest.GetResourceStream())
     try { $metadata = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
-    Check ($metadata.gameVersion -eq '1.39.1') 'Dedicated manifest game version'
+    Check ($metadata.gameVersion -eq '1.42.0') 'Dedicated manifest game version'
     Check ($metadata.version -eq $plugin.Name.Version.ToString(3)) 'Manifest/assembly version consistency'
     if ($script:failures.Count) { throw ($script:failures -join "`n") }
     Write-Output "API CHECK PASSED: $script:checks checks; game=$GameDirectory; mods=$ModReferencesDir"
