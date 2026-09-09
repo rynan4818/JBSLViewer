@@ -33,3 +33,5 @@
 `build.ps1` が `artifacts/BS1.42.0/<日時>/` にZIP、DLL、ライセンス、ビルドログ、API照合、self-testログ、SHA256を出力する。ゲームへのコピーは行わない。
 
 各本体へ対応Modを導入し、テスト用リーグで実認証、Challenge予約→通常Play→Clear/Fail/Quit、Pause/Restart抑止、送信禁止、Outbox再送信、Arc/Chainを含むBSORの実機確認を行う。
+
+結果画面の補足表示にはBSML 1.14系のCreateCurvedUITextとTMPのtextWrappingModeを使用。API照合は各ゲームDLLが対象フォルダーから解決されることも確認し、Mod参照フォルダーの本体DLLへの置き換わりを拒否する。

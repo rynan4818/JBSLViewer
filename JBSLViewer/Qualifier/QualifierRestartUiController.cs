@@ -26,11 +26,12 @@ namespace JBSLViewer.Qualifier
             var notice = _host.HideResultRestart ? null : _host.Notice;
             if (!_notices.TryGetValue(results, out var label) && !string.IsNullOrWhiteSpace(notice))
             {
-                label = BeatSaberUI.CreateText(results.transform as RectTransform, string.Empty, Vector2.zero, new Vector2(110, 14));
+                label = BeatSaberUI.CreateCurvedUIText(results.transform as RectTransform, string.Empty);
+                label.rectTransform.sizeDelta = new Vector2(110, 14);
                 label.name = "JBSLQualifierRestartNotice";
                 label.alignment = TextAlignmentOptions.Center;
                 label.fontSize = 2.3f;
-                label.enableWordWrapping = true;
+                label.textWrappingMode = TextWrappingModes.Normal;
                 label.richText = false;
                 label.raycastTarget = false;
                 label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(.5f, 0);
