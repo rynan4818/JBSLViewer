@@ -30,3 +30,5 @@
 `build.ps1` が `artifacts/BS1.40.8/<日時>/` にZIP、DLL、ライセンス、ビルドログ、API照合、self-testログ、SHA256を出力する。ゲームへのコピーは行わない。
 
 対応Modとテスト用リーグを用意し、Challenge予約→通常Play→Clear/Fail/Quit、Pause/Restart抑止、送信禁止、認証とOutbox再送信を実機で確認する。Arc/Chain複合ノーツを含む譜面のBSORも確認対象。
+
+BeatSaberVersion.txtがない1.40.5、1.40.6、1.40.7はglobalgamemanagers内のPlayerSettingsから、それぞれ1.40.5_5928、1.40.6_6407、1.40.7_7060の文字列を確認した。API照合では各ゲームDLLの実ファイルが対象フォルダーから解決されることも確認する。
