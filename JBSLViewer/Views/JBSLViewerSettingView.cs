@@ -31,7 +31,7 @@ namespace JBSLViewer.Views
 
         public void Initialize()
         {
-            BSMLSettings.Instance.AddSettingsMenu(ButtonName, this.ResourceName, this);
+            BSMLSettings.instance.AddSettingsMenu(ButtonName, this.ResourceName, this);
             _qualifier.StateChanged += RefreshQualifier;
             RefreshQualifier();
         }
@@ -41,7 +41,7 @@ namespace JBSLViewer.Views
             if (this._disposedValue)
                 return;
 
-            BSMLSettings.Instance?.RemoveSettingsMenu(ButtonName);
+            BSMLSettings.instance?.RemoveSettingsMenu(ButtonName);
             _qualifier.StateChanged -= RefreshQualifier;
             this._disposedValue = true;
         }

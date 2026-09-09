@@ -1,16 +1,16 @@
-﻿{
+{
   "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
   "id": "JBSLViewer",
   "name": "JBSLViewer",
   "author": "Rynan",
   "version": "0.4.0",
   "description": "JBSL-Web Viewer",
-  "gameVersion": "1.39.1",
+  "gameVersion": "1.37.1",
   "dependsOn": {
     "BSIPA": "^4.3.5",
-    "SiraUtil": "^3.1.14",
-    "BeatSaberMarkupLanguage": "^1.12.0",
-    "BS Utils": "^1.14.2",
-    "LeaderboardCore": "^1.7.0"
+    "SiraUtil": "^3.1.11",
+    "BeatSaberMarkupLanguage": ">=1.11.4 <1.12.0",
+    "BS Utils": "^1.14.0",
+    "LeaderboardCore": "^1.6.0"
   }
 }

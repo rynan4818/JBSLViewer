@@ -71,7 +71,7 @@ namespace JBSLViewer.Qualifier
             info.difficulty = context.Map.Difficulty;
             info.songName = _setup.beatmapLevel.songName;
             info.mapper = string.Join(",", _setup.beatmapLevel.allMappers);
-            info.environment = _setup.targetEnvironmentInfo.environmentName;
+            info.environment = _setup.environmentInfo.environmentName;
             info.leftHanded = _setup.playerSpecificSettings.leftHanded;
             info.height = _setup.playerSpecificSettings.automaticPlayerHeight ? 0 : _setup.playerSpecificSettings.playerHeight;
             info.jumpDistance = _spawn.jumpDistance;
@@ -131,7 +131,7 @@ namespace JBSLViewer.Qualifier
         private void HeightChanged(float height)
         { if (_recording) _replay.heights.Add(new R.AutomaticHeight { height = height, time = _time.songTime }); }
 
-        private void NoteAdded(NoteData data, BeatmapObjectSpawnMovementData.NoteSpawnData spawn)
+        private void NoteAdded(NoteData data, BeatmapObjectSpawnMovementData.NoteSpawnData spawn, float rotation)
         {
             if (!_recording) return;
             _notes[data] = new R.NoteEvent {

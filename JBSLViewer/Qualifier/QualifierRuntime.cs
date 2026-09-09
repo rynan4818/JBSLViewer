@@ -85,9 +85,9 @@ namespace JBSLViewer.Qualifier
             }
         }
         private void IdentityChanged() { _auth.RefreshIdentity(); _menu?.SelectionUpdated(); NotifyState(); }
-        private void SceneTransitionStarted(GameScenesManager.SceneTransitionType transitionType, float duration)
+        private void SceneTransitionStarted(float duration)
         { _sceneTransitioning = true; _menu?.SelectionUpdated(); }
-        private void SceneTransitionFinished(GameScenesManager.SceneTransitionType transitionType, ScenesTransitionSetupDataSO setup, DiContainer container)
+        private void SceneTransitionFinished(ScenesTransitionSetupDataSO setup, DiContainer container)
         { _sceneTransitioning = false; _menu?.SelectionUpdated(); }
         private void SubmissionChanged() { _eligibility = _submission.ReadCurrent(); _coordinator?.Reevaluate(); }
         private void ConfigurationChanged() => _dispatcher.Post(ApplyConfiguration);

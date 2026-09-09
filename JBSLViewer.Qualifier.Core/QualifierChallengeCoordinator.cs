@@ -14,7 +14,7 @@ namespace JBSLViewer.Qualifier.Core {
         private ScoreSession _statusSession;
         private readonly HashSet<ChallengeContext> _finalizingContexts=new HashSet<ChallengeContext>();
         public string ClientVersion { get; set; } = "JBSLViewer/0.4.0";
-        public string GameVersion { get; set; } = "1.39.1";
+        public string GameVersion { get; set; } = "1.37.1";
         public TimeSpan ReserveUiTimeout { get; set; } = TimeSpan.FromSeconds(30);
         public ChallengeContext ActiveChallenge { get; private set; }
         public ReserveOperation PendingReserve { get { return _operation!=null&&!_operation.Resolved?_operation:null; } }

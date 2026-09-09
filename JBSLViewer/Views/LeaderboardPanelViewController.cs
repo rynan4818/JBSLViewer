@@ -580,7 +580,7 @@ namespace JBSLViewer.Views
             if (dropdown == null)
                 return;
 
-            dropdown.Values = options;
+            dropdown.values = options;
             dropdown.UpdateChoices();
             dropdown.ReceiveValue();
         }
@@ -597,8 +597,8 @@ namespace JBSLViewer.Views
             if (hasLeagueData && int.TryParse(this._jbslLeagueValue, out var leagueID) && leagueID != -1)
                 hasVirtualParticipation = this._virtualLeagueService.IsVirtualParticipationAvailable(leagueID);
 
-            this._jbslLeagueSetting.Interactable = !isBusy && hasLeagueData;
-            this._leaderboardSetting.Interactable = !isBusy && hasLeaderboardData;
+            this._jbslLeagueSetting.interactable = !isBusy && hasLeagueData;
+            this._leaderboardSetting.interactable = !isBusy && hasLeaderboardData;
             this._leagueReloadButton.interactable = !isBusy;
             this._reloadButton.interactable = !isBusy && hasLeagueData;
             this._totalButton.interactable = !isBusy && this.LeaderboardChoices.Contains("0");
