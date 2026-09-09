@@ -59,6 +59,15 @@ function Validate-Patch($patch, $original) {
     }
 }
 try {
+    # A missing game DLL must not silently resolve from the separate Mod reference installation.
+    $modAssemblies = @('0Harmony', 'IPA.Loader', 'BSML', 'BS_Utils', 'SiraUtil', 'LeaderboardCore')
+    foreach ($reference in $plugin.MainModule.AssemblyReferences) {
+        if ($reference.Name -in $modAssemblies -or $reference.Name -match '^(mscorlib|netstandard|System(\.|$)|Newtonsoft\.Json$)') { continue }
+        $expected = [IO.Path]::GetFullPath((Join-Path $GameDirectory ('Beat Saber_Data/Managed/' + $reference.Name + '.dll')))
+        if (!(Test-Path -LiteralPath $expected)) { throw "Missing game reference: $expected" }
+        $resolved = $resolver.Resolve($reference).MainModule.FileName
+        if ([IO.Path]::GetFullPath($resolved) -ne $expected) { throw "Wrong game reference: $resolved (expected $expected)" }
+    }
     $types = @(All-Types $plugin.MainModule.Types)
     foreach ($reference in $plugin.MainModule.GetMemberReferences()) {
         if ($reference.DeclaringType.Scope.Name -match '^(mscorlib|netstandard|System(\.|$)|Newtonsoft\.Json$)') { continue }
