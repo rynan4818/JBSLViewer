@@ -28,3 +28,5 @@
 BeatLeaderの `Source/manifest.json` のgameVersion変更と周辺実装を調査した。`6f2d8f2e` / `3d92b690` の1.39対応（rotation引数削除）、`70c4a02d` / `ecc7c732` の1.29.1へ戻した差分を逆方向の移植に参照。`fbf1a1ff` のFPS補正も反映した。ライセンスは同梱の第三者表示を参照。
 
 1.38.0ではノーツイベントが3引数のため、このDLLの対象に含めない。1.37.1系・1.40.8系・1.42.0系は別ブランチとする。
+
+現在のBeat Saber（1.39.1_1715）の本体DLLでも399項目の照合に成功。現在のPluginsにはLeaderboardCoreがないため、実際に導入するには1.39.1対応のLeaderboardCoreが必要。検証時は1.39.1SSからMod参照を読み取った。
