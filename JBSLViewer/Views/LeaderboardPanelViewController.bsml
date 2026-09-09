@@ -23,4 +23,26 @@
   <horizontal anchor-pos-x="-22" anchor-pos-y="-3">
     <button id="ReloadButton" font-size="2" text="BOARD RELOAD" on-click="Reload"/>
   </horizontal>
+  <horizontal anchor-pos-x="0" anchor-pos-y="9">
+    <vertical id="QualifierArea" pref-width="88" anchor-pos-y="-18" spacing="1">
+      <horizontal>
+        <text id="QualifierStatus" font-size="2.5" align="Center" word-wrapping="true"/>
+        <button id="QualifierChallenge" text="CHALLENGE" font-size="3" pref-width="28" on-click="QualifierChallenge"/>
+      </horizontal>
+    </vertical>
+  </horizontal>
+  <horizontal anchor-pos-x="32" anchor-pos-y="5">
+    <text id="QualifierNotice" font-size="2.5" align="Center" word-wrapping="true" pref-width="88" anchor-pos-y="-18"/>
+  </horizontal>
+  <horizontal anchor-pos-x="32" anchor-pos-y="5">
+    <modal id="QualifierConfirmation" click-off-closes="false" size-delta-x="95" size-delta-y="63">
+      <vertical spacing="3" pad="4">
+        <text id="QualifierConfirmText" font-size="3" word-wrapping="true" align="Center" pref-width="85"/>
+        <horizontal spacing="5">
+          <button id="QualifierCancel" text="CANCEL" on-click="QualifierCancel"/>
+          <button id="QualifierConfirm" text="CONFIRM" on-click="QualifierConfirm"/>
+        </horizontal>
+      </vertical>
+    </modal>
+  </horizontal>
 </bg>

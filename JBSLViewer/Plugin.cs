@@ -5,6 +5,7 @@ using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
 using JBSLViewer.Installers;
 using System;
+using HarmonyLib;
 
 namespace JBSLViewer
 {
@@ -14,6 +15,8 @@ namespace JBSLViewer
         internal static Plugin Instance { get; private set; }
         internal static IPALogger Log { get; private set; }
         public static event Action OnPluginExit;
+        private Harmony _harmony;
+        internal static bool QualifierHooksReady { get; private set; }
 
         [Init]
         /// <summary>
@@ -34,12 +37,24 @@ namespace JBSLViewer
             //使用するZenjectのインストーラーのコメントを外します
             zenjector.Install<JBSLViewerAppInstaller>(Location.App);
             zenjector.Install<JBSLViewerMenuInstaller>(Location.Menu);
-            //zenjector.Install<JBSLViewerPlayerInstaller>(Location.Player);
+            zenjector.Install<JBSLViewerPlayerInstaller>(Location.StandardPlayer);
         }
         [OnStart]
         public void OnApplicationStart()
         {
             Log.Debug("OnApplicationStart");
+            _harmony = new Harmony("JBSLViewer.Qualifier");
+            try
+            {
+                _harmony.PatchAll(typeof(Plugin).Assembly);
+                QualifierHooksReady = true;
+            }
+            catch (Exception ex)
+            {
+                _harmony.UnpatchSelf();
+                QualifierHooksReady = false;
+                Log.Error("Qualifier hooks could not be installed: " + ex.GetType().Name);
+            }
         }
 
         [OnExit]
@@ -47,6 +62,7 @@ namespace JBSLViewer
         {
             Log.Debug("OnApplicationQuit");
             OnPluginExit?.Invoke();
+            _harmony?.UnpatchSelf();
         }
     }
 }

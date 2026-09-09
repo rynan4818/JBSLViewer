@@ -1,5 +1,6 @@
 ﻿using JBSLViewer.Models;
 using Zenject;
+using JBSLViewer.Qualifier;
 
 namespace JBSLViewer.Installers
 {
@@ -7,6 +8,11 @@ namespace JBSLViewer.Installers
     {
         public override void InstallBindings()
         {
+            Container.BindInterfacesAndSelfTo<QualifierDispatcher>().AsSingle().NonLazy();
+            Container.BindExecutionOrder<QualifierDispatcher>(-1000);
+            Container.BindInterfacesAndSelfTo<PlayerIdentityService>().AsSingle().NonLazy();
+            Container.BindInterfacesAndSelfTo<SubmissionEligibilityTracker>().AsSingle().NonLazy();
+            Container.BindInterfacesAndSelfTo<QualifierRuntime>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<SaveData>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<ActiveLeague>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<Leaderboard>().AsSingle().NonLazy();

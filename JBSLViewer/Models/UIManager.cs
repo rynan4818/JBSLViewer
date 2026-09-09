@@ -50,6 +50,7 @@ namespace JBSLViewer.Models
             if (!int.TryParse(this._leaderboardPanelViewController.JBSLLeagueValue, out var leagueID))
                 return;
             var maps = this._leaderboard.GetMap(leagueID);
+            if (maps == null) return;
             for (var i = 0; i < maps.Count; i++)
             {
                 if (maps[i].lid == null)
