@@ -1,0 +1,17 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)'==''">Release</Configuration><Platform Condition="'$(Platform)'==''">AnyCPU</Platform>
+    <ProjectGuid>{EA52AEB5-8472-40EE-8DFA-48249B3B0B04}</ProjectGuid><OutputType>Exe</OutputType><TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <AssemblyName>JBSLViewer.Qualifier.Tests</AssemblyName><RootNamespace>JBSLViewer.Qualifier.Tests</RootNamespace><LangVersion>latest</LangVersion>
+    <OutputPath>bin\$(Configuration)\</OutputPath><DebugType>portable</DebugType>
+    <NewtonsoftJsonPath Condition="'$(NewtonsoftJsonPath)'==''">C:\Program Files (x86)\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Newtonsoft.Json.dll</NewtonsoftJsonPath>
+  </PropertyGroup>
+  <ItemGroup><Reference Include="System"/><Reference Include="System.Core"/><Reference Include="System.Net.Http"/><Reference Include="System.IO.Compression"/><Reference Include="Newtonsoft.Json"><HintPath>$(NewtonsoftJsonPath)</HintPath><Private>true</Private></Reference></ItemGroup>
+  <Import Project="..\JBSLViewer.Qualifier.Core\JBSLViewer.Qualifier.Core.projitems" Label="Shared" />
+  <ItemGroup>
+    <Compile Include="..\JBSLViewer\Models\Leaderboard.cs"><Link>Production\Leaderboard.cs</Link></Compile>
+    <Compile Include="..\JBSLViewer\Models\JBSL\LeaderboardJson.cs"><Link>Production\LeaderboardJson.cs</Link></Compile>
+  </ItemGroup>
+  <ItemGroup><Compile Include="*.cs"/><Content Include="Fixtures\**\*"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content></ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

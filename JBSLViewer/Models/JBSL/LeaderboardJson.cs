@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using JBSLViewer.Qualifier.Core.Contracts;
 
 namespace JBSLViewer.Models.JBSL
 {
@@ -12,6 +14,10 @@ namespace JBSLViewer.Models.JBSL
         public List<Score> total_rank { get; set; }
         public List<Map> maps { get; set; }
         public DateTime jbslViewerGetTime { get; set; }
+        // Only the strict, validated contract may authorize a challenge.
+        [JsonIgnore] public string qualifierSourceJson { get; set; }
+        [JsonIgnore] public LeaderboardContract qualifierContract { get; set; }
+        [JsonIgnore] public string qualifierValidationError { get; set; }
     }
 
     public class Map

@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using JBSLViewer.Configuration;
 using JBSLViewer.Util;
 using JBSLViewer.Models.JBSL;
+using JBSLViewer.Qualifier.Core.Contracts;
 
 namespace JBSLViewer.Models
 {
@@ -15,50 +16,76 @@ namespace JBSLViewer.Models
         private readonly LatestUpdate _latestUpdate;
         public bool _getActive = false;
         public ConcurrentDictionary<int, LeaderboardJson> _leaderboards = new ConcurrentDictionary<int, LeaderboardJson>();
+        private readonly object _fetchLock = new object();
+        private readonly Dictionary<int, Task> _fetches = new Dictionary<int, Task>();
+        private readonly HashSet<int> _failedFetches = new HashSet<int>();
+        public event Action<int> Updated;
         public Leaderboard(LatestUpdate latestUpdate)
         {
             this._latestUpdate = latestUpdate;
         }
-        public async Task GetLeaderboardAsync(int leagueID, bool reload = false)
+        public Task GetLeaderboardAsync(int leagueID, bool reload = false)
         {
-            if (leagueID == -1 || this._getActive)
-                return;
-            if (!reload && this._leaderboards.ContainsKey(leagueID) && this._latestUpdate._latest < this._leaderboards[leagueID].jbslViewerGetTime)
-                return;
-            this._getActive = true;
-            LeaderboardJson leaderboard;
+            if (leagueID <= 0) return Task.CompletedTask;
+            TaskCompletionSource<bool> completion;
+            lock (_fetchLock)
+            {
+                if (_fetches.TryGetValue(leagueID, out var existing)) return existing;
+                if (!reload && IsQualifierCacheFresh(leagueID)) return Task.CompletedTask;
+                completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _fetches.Add(leagueID, completion.Task);
+                _getActive = true;
+            }
+            _ = FetchLeaderboardAsync(leagueID, completion);
+            return completion.Task;
+        }
+
+        public bool IsQualifierCacheFresh(int leagueID)
+        {
+            lock (_fetchLock)
+                return !_failedFetches.Contains(leagueID) && !_fetches.ContainsKey(leagueID)
+                    && _leaderboards.TryGetValue(leagueID, out var value)
+                    && value.jbslViewerGetTime >= _latestUpdate._latest;
+        }
+
+        private async Task FetchLeaderboardAsync(int leagueID, TaskCompletionSource<bool> completion)
+        {
             try
             {
                 var resJsonString = await HttpUtility.GetHttpContentAsync($"{PluginConfig.Instance.leaderboardApiUrl}{leagueID}");
                 if (resJsonString == null)
                     throw new Exception("JBSL Leaderboard get error");
-                leaderboard = JsonConvert.DeserializeObject<LeaderboardJson>(resJsonString);
+                var leaderboard = JsonConvert.DeserializeObject<LeaderboardJson>(resJsonString);
                 if (leaderboard == null)
                     throw new Exception("JBSL Leaderboard deserialize error");
+                leaderboard.qualifierSourceJson = resJsonString;
+                try { leaderboard.qualifierContract = StrictJson.ParseLeaderboard(resJsonString); }
+                catch (Exception) { leaderboard.qualifierValidationError = "invalid_qualifier_contract"; }
+                leaderboard.jbslViewerGetTime = DateTime.Now;
+                _leaderboards[leagueID] = leaderboard;
+                lock (_fetchLock) _failedFetches.Remove(leagueID);
             }
             catch (Exception ex)
             {
                 Plugin.Log.Error(ex.ToString());
-                this._getActive = false;
-                return;
+                lock (_fetchLock) _failedFetches.Add(leagueID);
             }
-            leaderboard.jbslViewerGetTime = DateTime.Now;
-            if (this._leaderboards.ContainsKey(leagueID))
-                this._leaderboards[leagueID] = leaderboard;
-            else
-                this._leaderboards.TryAdd(leagueID, leaderboard);
-            this._getActive = false;
-            return;
+            finally
+            {
+                lock (_fetchLock) { _fetches.Remove(leagueID); _getActive = _fetches.Count != 0; }
+                completion.TrySetResult(true);
+                Updated?.Invoke(leagueID);
+            }
         }
         public string GetLeaderboardName(int leagueID, int index)
         {
-            if (leagueID == -1 || !this._leaderboards.ContainsKey(leagueID) || index < 0 || index >= this._leaderboards[leagueID].maps.Count)
+            if (!_leaderboards.TryGetValue(leagueID, out var board) || board.maps == null || index < 0 || index >= board.maps.Count)
                 return null;
             return this._leaderboards[leagueID].maps[index].title;
         }
         public List<Score> GetMapLeaderboard(int leagueID, int index)
         {
-            if (leagueID == -1 || !this._leaderboards.ContainsKey(leagueID) || index < 0 || index >= this._leaderboards[leagueID].maps.Count)
+            if (!_leaderboards.TryGetValue(leagueID, out var board) || board.maps == null || index < 0 || index >= board.maps.Count)
                 return null;
             return this._leaderboards[leagueID].maps[index].scores;
         }

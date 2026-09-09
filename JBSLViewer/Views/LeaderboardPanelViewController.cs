@@ -13,6 +13,7 @@ using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.ViewControllers;
 using JBSLViewer.Configuration;
 using JBSLViewer.Models;
+using JBSLViewer.Qualifier;
 
 namespace JBSLViewer.Views
 {
@@ -57,6 +58,17 @@ namespace JBSLViewer.Views
         private readonly LeaderboardMainViewController _leaderboardMainViewController;
         [Inject]
         private readonly VirtualLeagueService _virtualLeagueService;
+        [Inject] private readonly QualifierRuntime _qualifier;
+        [UIComponent("QualifierArea")] private readonly RectTransform _qualifierArea;
+        [UIComponent("QualifierStatus")] private readonly TextMeshProUGUI _qualifierStatus;
+        [UIComponent("QualifierChallenge")] private readonly Button _qualifierChallenge;
+        [UIComponent("QualifierConfirmation")] private readonly ModalView _qualifierConfirmation;
+        [UIComponent("QualifierConfirmText")] private readonly TextMeshProUGUI _qualifierConfirmText;
+        [UIComponent("QualifierConfirm")] private readonly Button _qualifierConfirm;
+        [UIComponent("QualifierCancel")] private readonly Button _qualifierCancel;
+        [UIComponent("QualifierNotice")] private readonly TextMeshProUGUI _qualifierNotice;
+        private bool _qualifierModalShown;
+        private bool _qualifierWasLocked;
 
         public async Task InitializeAsync(CancellationToken token)
         {
@@ -68,6 +80,7 @@ namespace JBSLViewer.Views
         {
             if (!this.isActivated || !this._init)
                 return;
+            UpdateQualifierVisuals();
             if (this._currentCycleTime < 1f)
             {
                 this._currentCycleTime += Time.deltaTime;
@@ -324,6 +337,7 @@ namespace JBSLViewer.Views
                     return;
 
                 this._jbslLeagueValue = value;
+                QualifierMenuController.Instance?.SelectionUpdated();
                 this.SyncVirtualParticipationValue();
                 if (this._init)
                     this.UpdateControlInteractivity();
@@ -457,7 +471,52 @@ namespace JBSLViewer.Views
             this.SyncVirtualParticipationValue();
             this.UpdateControlInteractivity();
             this._leaderboardMainViewController.SetTitle();
+            UpdateQualifierVisuals();
         }
+
+        private void UpdateQualifierVisuals()
+        {
+            if (!_init || _qualifierArea == null) return;
+            var state = _qualifier.ViewState;
+            _qualifierNotice.text = _qualifier.Notice ?? "";
+            _qualifierNotice.gameObject.SetActive(_qualifier.Notice != null && _qualifier.CaptureSelection().IsSolo && !state.Visible);
+            _qualifierArea.gameObject.SetActive(state.Visible);
+            _qualifierStatus.text = "Qualifier  " + (state.RemainingAttempts.HasValue
+                ? state.RemainingAttempts + " / " + state.AttemptLimit + " attempts remaining" : "")
+                + "\n" + (_qualifier.ConfigurationMessage ?? _qualifier.Notice ?? state.Message ?? "");
+            _qualifierChallenge.interactable = state.CanChallenge && _qualifier.ConfigurationMessage == null;
+            _qualifierConfirm.interactable = state.CanConfirm;
+            _qualifierCancel.interactable = state.ConfirmationOpen && _qualifier.SelectionLocked;
+            if (_qualifierModalShown && !state.ConfirmationOpen)
+            { _qualifierConfirmation.Hide(false); _qualifierModalShown = false; }
+            if (_qualifierWasLocked != _qualifier.SelectionLocked)
+            { _qualifierWasLocked = _qualifier.SelectionLocked; UpdateControlInteractivity(); }
+        }
+
+        [UIAction("QualifierChallenge")]
+        private void Challenge()
+        {
+            QualifierMenuController.Instance?.SelectionUpdated();
+            if (!_qualifier.BeginConfirmation()) return;
+            var selection = _qualifier.CaptureSelection();
+            _qualifierConfirmText.text = "Start a Qualifier challenge?\n\n"
+                + selection.Leaderboard?.Title + "\n" + selection.SongTitle + "\n"
+                + selection.Map?.Characteristic + " / " + selection.Map?.Difficulty
+                + "\n\nRemaining: " + _qualifier.ViewState.RemainingAttempts
+                + "\nOne attempt is consumed when the reservation succeeds.\nQuit, Restart or a failed start does not refund it.";
+            _qualifierModalShown = true;
+            _qualifierConfirmation.Show(true, true);
+            UpdateQualifierVisuals();
+        }
+        [UIAction("QualifierConfirm")]
+        private async void ConfirmChallenge()
+        {
+            try { await _qualifier.ConfirmAsync(); }
+            catch (Exception ex) { Plugin.Log.Warn("Qualifier confirmation failed: " + ex.GetType().Name); }
+            finally { UpdateQualifierVisuals(); }
+        }
+        [UIAction("QualifierCancel")]
+        private void CancelChallenge() { _qualifier.CancelConfirmation(); UpdateQualifierVisuals(); }
 
         private void SetLeagueValueInternal(string value)
         {
@@ -531,7 +590,7 @@ namespace JBSLViewer.Views
             if (!this._init)
                 return;
 
-            var isBusy = LeaderboardInfoSemaphore.CurrentCount == 0 || AllResetSemaphore.CurrentCount == 0 || SetLeaderboardSemaphore.CurrentCount == 0 || this._isVirtualParticipationLoading;
+            var isBusy = LeaderboardInfoSemaphore.CurrentCount == 0 || AllResetSemaphore.CurrentCount == 0 || SetLeaderboardSemaphore.CurrentCount == 0 || this._isVirtualParticipationLoading || _qualifier.SelectionLocked;
             var hasLeagueData = !this.IsPlaceholderOnly(this.JBSLLeagueChoices, PlaceholderLeagueId);
             var hasLeaderboardData = !this.IsPlaceholderOnly(this.LeaderboardChoices, PlaceholderLeaderboardId);
             var hasVirtualParticipation = false;

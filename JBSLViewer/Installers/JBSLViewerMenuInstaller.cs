@@ -2,6 +2,7 @@
 using JBSLViewer.Registerers;
 using JBSLViewer.Views;
 using Zenject;
+using JBSLViewer.Qualifier;
 
 namespace JBSLViewer.Installers
 {
@@ -15,6 +16,9 @@ namespace JBSLViewer.Installers
             this.Container.BindInterfacesAndSelfTo<LeaderboardRegisterer>().AsSingle();
             this.Container.BindInterfacesAndSelfTo<VirtualLeagueScoreUploadWatcher>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<UIManager>().AsSingle();
+            Container.BindInterfacesAndSelfTo<StandardPlayAdapter>().AsSingle().NonLazy();
+            Container.BindInterfacesAndSelfTo<QualifierMenuController>().AsSingle().NonLazy();
+            Container.BindInterfacesAndSelfTo<QualifierRestartUiController>().AsSingle().NonLazy();
         }
     }
 }

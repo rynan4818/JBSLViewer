@@ -3,5 +3,20 @@
 	>
   <settings-container>
     <bool-setting text='Virtual League Use ScoreSaber maxScore' value='UseScoreSaberMaxScoreForVirtualLeague' apply-on-change='true'></bool-setting>
+    <string-setting text='Qualifier score server URL' value='ScoreServerUrl' apply-on-change='true'/>
+    <bool-setting text='Allow development HTTP on loopback' value='AllowDevelopmentHttp' apply-on-change='true'/>
+    <text text='Qualifier results' font-size='4'/>
+    <text text='~OutboxStatus' font-size='2.6' word-wrapping='true'/>
+    <button text='RETRY / REAUTHENTICATE' on-click='RetryQualifier' interactable='~RetryEnabled'/>
+    <button text='CLEAR LOCAL RESULTS...' on-click='AskClearQualifier' interactable='~ClearEnabled'/>
   </settings-container>
+  <modal id='ClearResultsModal' click-off-closes='false' size-delta-x='95' size-delta-y='45'>
+    <vertical spacing='3' pad='4'>
+      <text text='Clear unresolved local results?&#10;Unsaved data is also discarded.&#10;Attempts are not refunded. Server data is kept.' font-size='3' align='Center' word-wrapping='true'/>
+      <horizontal spacing='5'>
+        <button text='CANCEL' on-click='CancelClearQualifier'/>
+        <button text='CLEAR' on-click='ClearQualifier'/>
+      </horizontal>
+    </vertical>
+  </modal>
 </bg>

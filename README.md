@@ -31,3 +31,56 @@
 * 自分のスコアをハイライト表示
 * プレイリストダウンロード機能
 * 終了したリーグの閲覧機能
+
+# Qualifier（Beat Saber 1.29.1）
+
+`docs`のRevision 9に対応する、試行回数制限付きの挑戦機能を追加しています。通常のSolo Free Playで、実参加者・対象MapKey・受付期間・ローカル曲時間による開始期限が条件を満たすと、JBSLのパネルに`CHALLENGE`が表示されます。既存のランキングcacheを使用し、曲の選択ごとにJBSL-WEBを再取得しません。
+
+確認画面の`CONFIRM`後、スコア管理サーバで予約が成功すると1回消費し、標準Playを開始します。Quit、Restart、開始失敗による返却はありません。通常のPauseや標準Modifierは使用できます。提出禁止状態はBS UtilsとSiraUtilの現在値から判定します。
+
+結果はBSORとともに`UserData/JBSLViewer/QualifierOutbox`へ先に保存してから送信します。送信待ち・保存失敗・認証待ち・送信停止の結果がある間、新しいChallengeは開始できません。通常Playは利用できます。設定画面の`RETRY / REAUTHENTICATE`で保存・認証・送信を再試行できます。`CLEAR LOCAL RESULTS...`は確認後にローカルの未解決結果を破棄し、消費回数やサーバ保存済み結果は変更しません。
+
+送信停止の`stopped`は`RETRY / REAUTHENTICATE`の再送対象外です。サーバ管理画面でチャレンジを強制終了しても、Viewerのローカル未解決結果は残るため、`Unresolved result — open settings`とChallengeの無効状態は解消しません。対象チャレンジが強制終了済みでローカル結果を破棄する場合は、Mod設定の`JBSLViewer`を開き、`Qualifier results`の状態とエラーを確認して、`CLEAR LOCAL RESULTS...` → `CLEAR`を実行してから曲選択へ戻ってください。ゲーム再起動でも送信停止記録は保持されます。
+
+Clear・Fail結果の`gameVersion`は、リプレイと同じ実ゲームのバージョン（例：`1.29.1_4575554838`）をビルド番号ごと保持します。旧版でバージョン不一致により`replay_mismatch`となった既存の送信停止記録は、DLL更新だけでは変更されません。
+
+結果の所有者と送信先は予約時点で固定されます。URLを変更すると旧送信先の結果は`server_mismatch`で保留され、別サーバへ送り替えません。元のURLへ戻すと元の状態に従って復旧します。Cookieや認証ticketはOutboxへ保存しません。起動をまたぐ結果復旧は永続保存できた結果が対象です。応答不明のreserveは起動をまたいで再送しません。
+
+## 設定と仮サーバ
+
+`scoreServerBaseUrl`の初期値は空です。ゲームのJBSLViewer設定で、利用するスコア管理サーバのHTTPS URLを設定してください。ローカルのPython仮サーバは、このリポジトリの1階層上にある`mock_servers`です。起動・fixture・認証modeは[`mock_servers/README.md`](../mock_servers/README.md)を参照してください。
+
+開発用HTTPを使うときのMod設定例です。
+
+```json
+{
+  "leaderboardApiUrl": "http://127.0.0.1:18080/leaderboard/api/",
+  "scoreServerBaseUrl": "http://127.0.0.1:18081/",
+  "allowDevelopmentHttp": true,
+  "qualifierRequestTimeoutSeconds": 30
+}
+```
+
+中継へ向ける既存APIは`leaderboardApiUrl`だけです。active league一覧・playlist・headlinesのURLは既存の設定を使います。`localhost`と`127.0.0.1`、port、base pathが異なるURLは別の送信先として扱います。
+
+同梱fixtureは通信検証用です。ゲーム内で試す場合は、実際に選択可能なリーグ、参加者のplatform SID、インストール済み譜面のhash・characteristic・difficultyに合わせたfixtureを別途設定してください。stub認証の`JBSL_MOCK_SID`も実プレイヤーのSIDと一致させます。不一致のままではChallengeを開始できません。
+
+## ビルドとゲーム外検証
+
+Visual StudioのMSBuild、.NET Framework 4.8開発ツール、およびBeat Saber 1.29.1の参照DLLが必要です。共有C#処理は`JBSLViewer.Qualifier.Core`からModとConsoleへ同じソースを取り込み、Core専用DLLの配布は不要です。ゲームDLLを含まないConsoleは、通信・認証・進行状態・Outbox・BSOR形式を検証します。
+
+Visual Studioでは`JBSLViewer.sln`を開くと、共有プロジェクト`JBSLViewer.Qualifier.Core`がソリューションエクスプローラーに表示されます。CoreのソースはModとConsoleに直接コンパイルされます。
+
+ゲームへの自動コピーを有効にするには、ローカル設定`JBSLViewer/JBSLViewer.csproj.user`の`PropertyGroup`に`<DisableCopyToGame>False</DisableCopyToGame>`を追加し、`BeatSaberDir`にゲームのインストール先を指定します。ビルド成功時にゲームの`Plugins`へDLLがコピーされます。このユーザー設定ファイルはGit管理対象外です。検証などでコピーを止める場合はMSBuildに`/p:DisableCopyToGame=True`を指定してください。
+
+作業ルートから実行します（先にPython仮サーバのvenvを作成してください）。
+
+```powershell
+.\run_validation.ps1 -GameDirectory 'C:\Program Files (x86)\Steam\steamapps\common\Beat Saber'
+```
+
+NuGetが利用できない環境では、既存のpackage cacheを`-LocalNuGetFeed`へ指定できます。`-MSBuildPath`、`-WebPort`、`-ScorePort`も指定可能です。スクリプトはsolutionをビルドし、C# self-test、Pythonテスト、2つの仮サーバとの実HTTP試験、最後にModのRelease再ビルドを行います。試験用DBは毎回隔離され、起動した仮サーバだけを終了します。
+
+DLLは`JBSLViewer/bin/Release/JBSLViewer.dll`、配布用ファイルは同階層の`Artifact`、ログは`artifacts/validation-*`へ出力されます。ゲームへの自動コピーは既定で無効です。配布には`THIRD-PARTY-NOTICES.txt`を同梱してください。`manifest.json`のバージョン等は、この変更では更新していません。
+
+ゲーム内でのUI配置、Steam/Oculus実認証、他Mod併用、実トラッキングの録画品質はゲームで確認してください。検証内容と手順は[`docs/JBSL_Qualifier_Validation_Report.md`](../docs/JBSL_Qualifier_Validation_Report.md)に記録します。

@@ -1,0 +1,10 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>{72D30411-4150-48AC-91F9-9033D62224D1}</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>JBSLViewer.Qualifier.Core</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup><Compile Include="$(MSBuildThisFileDirectory)**\*.cs" Exclude="$(MSBuildThisFileDirectory)obj\**;$(MSBuildThisFileDirectory)bin\**" /></ItemGroup>
+</Project>

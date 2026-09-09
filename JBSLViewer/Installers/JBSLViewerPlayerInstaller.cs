@@ -1,15 +1,14 @@
-﻿/*
-//using JBSLViewer.Models;
+using JBSLViewer.Qualifier;
 using Zenject;
 
 namespace JBSLViewer.Installers
 {
-    public class JBSLViewerPlayerInstaller : MonoInstaller
+    public class JBSLViewerPlayerInstaller : Installer
     {
         public override void InstallBindings()
         {
-            //this.Container.BindInterfacesAndSelfTo<JBSLViewerController>().FromNewComponentOnNewGameObject().AsCached().NonLazy();
+            Container.BindInterfacesAndSelfTo<QualifierReplayRecorder>().AsSingle().NonLazy();
+            Container.BindInterfacesAndSelfTo<QualifierGameplayObserver>().AsSingle().NonLazy();
         }
     }
 }
-*/
