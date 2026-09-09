@@ -37,7 +37,7 @@ namespace JBSLViewer.Qualifier.Tests {
             var context=new ChallengeContext {ChallengeId=reserve.ChallengeId,OwnerSid=identity.CurrentSid,ScoreServerBaseUrl=auth.Endpoint.NormalizedUrl,Map=reserve.Map,ResultAcceptUntil=reserve.ResultAcceptUntil,ClientVersion="JBSLViewer/integration",Started=true,GameplayGeneration=1,Timing=new ResultTiming {StartedAtClient=clock.UtcNow,LocalSongDurationSeconds=180,SongSpeedMultiplier=1}};context.Submission.MarkStarted(true);
             await api.StartedAsync(await auth.EnsureAsync(),context.ChallengeId,new StartedRequest {ActualMap=context.Map,SubmissionAllowed=true,StartedAtClient=clock.UtcNow},CancellationToken.None);
             // Synthetic measurements exercise production serialization; this is not a real gameplay recording.
-            const string gameVersion="1.39.1_1715";
+            const string gameVersion="1.40.8_7379";
             var replay=new Replay();replay.info.gameVersion=gameVersion;replay.info.version="JBSLViewer/integration";replay.info.playerID=identity.CurrentSid;replay.info.playerName="通信検証";replay.info.platform="steam";replay.info.hash=context.Map.Hash;replay.info.mode=context.Map.Characteristic;replay.info.difficulty=context.Map.Difficulty;replay.info.speed=1;replay.info.score=endType=="clear"?115:0;
             replay.frames.Add(new Frame {time=1,fps=90,head=new Transform(),leftHand=new Transform(),rightHand=new Transform()});
             replay.notes.Add(new NoteEvent {noteID=0,eventTime=1,spawnTime=0.5f,eventType=endType=="clear"?NoteEventType.good:NoteEventType.miss,noteCutInfo=new NoteCutInfo {speedOK=true,directionOK=true,saberTypeOK=true,beforeCutRating=1,afterCutRating=1}});

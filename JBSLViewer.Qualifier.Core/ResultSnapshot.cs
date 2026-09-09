@@ -10,7 +10,7 @@ namespace JBSLViewer.Qualifier.Core {
             var m=observed==null?new ResultMetadata {GameVersion=context.GameVersion}:StrictJson.Clone(observed);
             m.ClientResultId=context.ClientResultId;m.ChallengeId=context.ChallengeId;m.Map=context.Map.Copy();m.ClientVersion=context.ClientVersion;
             // Preserve Application.version, including its build suffix, to match the recorded BSOR.
-            if(string.IsNullOrWhiteSpace(m.GameVersion)) m.GameVersion=string.IsNullOrWhiteSpace(context.GameVersion)?"1.39.1":context.GameVersion;
+            if(string.IsNullOrWhiteSpace(m.GameVersion)) m.GameVersion=string.IsNullOrWhiteSpace(context.GameVersion)?"1.40.8":context.GameVersion;
             var observedPlayCount=m.ScoreValidity?.PlayInstanceCount??0;
             m.EndType=endType;m.SubmissionEligibility=context.FrozenSubmission==null?context.Submission.ToContract():StrictJson.Clone(context.FrozenSubmission);m.Diagnostics=m.Diagnostics??new ResultDiagnostics();m.ScoreValidity=new ScoreValidity();
             var contextTiming=context.FrozenTiming??context.Timing;

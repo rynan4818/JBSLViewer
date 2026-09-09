@@ -16,7 +16,7 @@
     <DebugType>portable</DebugType>
     <LocalRefsDir Condition="Exists('..\Refs')">..\Refs</LocalRefsDir>
     <BeatSaberDir Condition="'$(BeatSaberDir)' == ''">$(LocalRefsDir)</BeatSaberDir>
-    <BeatSaberDir Condition="'$(BeatSaberDir)' == ''">$(MSBuildProgramFiles32)\Steam\steamapps\common\Beat Saber_1.39.1SS</BeatSaberDir>
+    <BeatSaberDir Condition="'$(BeatSaberDir)' == ''">$(MSBuildProgramFiles32)\Steam\steamapps\common\Beat Saber_1.40.8</BeatSaberDir>
     <ModReferencesDir Condition="'$(ModReferencesDir)' == ''">$(BeatSaberDir)</ModReferencesDir>
     <AssemblySearchPaths>{HintPathFromItem};{TargetFrameworkDirectory};$(BeatSaberDir)\Beat Saber_Data\Managed;$(ModReferencesDir)\Plugins;$(ModReferencesDir)\Libs;$(ModReferencesDir)\Beat Saber_Data\Managed;{RawFileName}</AssemblySearchPaths>
     <LangVersion>latest</LangVersion>

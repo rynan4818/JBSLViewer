@@ -1,5 +1,5 @@
 param(
-    [string]$GameDirectory = 'C:/Program Files (x86)/Steam/steamapps/common/Beat Saber_1.39.1SS',
+    [string]$GameDirectory = 'C:/Program Files (x86)/Steam/steamapps/common/Beat Saber_1.40.8',
     [string]$ModReferencesDir,
     [string]$MSBuildPath,
     [string]$LocalNuGetFeed,
@@ -26,6 +26,17 @@ $arguments = @('/restore', '/t:Rebuild', '/p:Configuration=Release', ('/p:BeatSa
     ('/flp:logfile=' + (Join-Path $output 'build.log') + ';verbosity=normal;encoding=UTF-8'),
     ('/p:RestorePackagesPath=' + (Join-Path $PSScriptRoot 'JBSLViewer/obj/nuget-packages')))
 if ($LocalNuGetFeed) { $arguments += '/p:RestoreSources=' + (Resolve-Path -LiteralPath $LocalNuGetFeed).Path }
+# Worktrees may have been created by a sandbox account. Trust only this build's repository,
+# only for this process and its children; do not change global Git configuration.
+$oldGitCount = [Environment]::GetEnvironmentVariable('GIT_CONFIG_COUNT', 'Process')
+$gitIndex = if ($oldGitCount) { [int]$oldGitCount } else { 0 }
+$gitKey = 'GIT_CONFIG_KEY_' + $gitIndex
+$gitValue = 'GIT_CONFIG_VALUE_' + $gitIndex
+$oldGitKey = [Environment]::GetEnvironmentVariable($gitKey, 'Process')
+$oldGitValue = [Environment]::GetEnvironmentVariable($gitValue, 'Process')
+[Environment]::SetEnvironmentVariable('GIT_CONFIG_COUNT', ($gitIndex + 1).ToString(), 'Process')
+[Environment]::SetEnvironmentVariable($gitKey, 'safe.directory', 'Process')
+[Environment]::SetEnvironmentVariable($gitValue, $PSScriptRoot.Replace('\', '/'), 'Process')
 Push-Location -LiteralPath $PSScriptRoot
 try {
     & $MSBuildPath 'JBSLViewer.sln' @arguments
@@ -52,4 +63,9 @@ try {
         archiveSha256 = (Get-FileHash -LiteralPath $archive).Hash
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'build-info.json') -Encoding utf8
     Write-Output "Build and checks passed: $archive"
-} finally { Pop-Location }
+} finally {
+    Pop-Location
+    [Environment]::SetEnvironmentVariable('GIT_CONFIG_COUNT', $oldGitCount, 'Process')
+    [Environment]::SetEnvironmentVariable($gitKey, $oldGitKey, 'Process')
+    [Environment]::SetEnvironmentVariable($gitValue, $oldGitValue, 'Process')
+}

@@ -34,9 +34,9 @@
 * プレイリストダウンロード機能
 * 終了したリーグの閲覧機能
 
-# Qualifier（BS1.39.1専用ブランチ）
+# Qualifier（BS1.40.8専用ブランチ）
 
-このブランチはBeat Saber **1.39.1**用です。`BS1.29.1`の`9c3fc19`（Qualifier機能仮搭載1）をmainの譜面APIへ移植しました。1.37.1系・1.40.8系・1.42.0系はそれぞれ専用ブランチで扱い、版をまたぐ実行時切り替えは行いません。詳細は[互換性と検証](docs/COMPATIBILITY.md)を参照してください。
+このブランチはBeat Saber **1.40.8を基準**とし、**1.40.0～1.40.8**の実DLLで利用APIを照合しています。`BS1.29.1`の`9c3fc19`（Qualifier機能仮搭載1）をmainの譜面APIへ移植しました。他の対象版はそれぞれ専用ブランチで扱い、版をまたぐ実行時切り替えは行いません。詳細は[互換性と検証](docs/COMPATIBILITY.md)を参照してください。
 
 `docs`のRevision 9に対応する、試行回数制限付きの挑戦機能を追加しています。通常のSolo Free Playで、実参加者・対象MapKey・受付期間・ローカル曲時間による開始期限が条件を満たすと、JBSLのパネルに`CHALLENGE`が表示されます。既存のランキングcacheを使用し、曲の選択ごとにJBSL-WEBを再取得しません。
 
@@ -46,7 +46,7 @@
 
 送信停止の`stopped`は`RETRY / REAUTHENTICATE`の再送対象外です。サーバ管理画面でチャレンジを強制終了しても、Viewerのローカル未解決結果は残るため、`Unresolved result — open settings`とChallengeの無効状態は解消しません。対象チャレンジが強制終了済みでローカル結果を破棄する場合は、Mod設定の`JBSLViewer`を開き、`Qualifier results`の状態とエラーを確認して、`CLEAR LOCAL RESULTS...` → `CLEAR`を実行してから曲選択へ戻ってください。ゲーム再起動でも送信停止記録は保持されます。
 
-予約とClear・Fail結果の`gameVersion`は実ゲームのバージョン（例：`1.39.1_1715`）をビルド番号ごと保持します。プレイ開始前に失敗した結果も予約時の版を保持し、録画結果ではBSORと一致する実測値を使います。旧版でバージョン不一致により`replay_mismatch`となった既存の送信停止記録は、DLL更新だけでは変更されません。
+予約とClear・Fail結果の`gameVersion`は実ゲームのバージョン（例：`1.40.8_7379`）をビルド番号ごと保持します。プレイ開始前に失敗した結果も予約時の版を保持し、録画結果ではBSORと一致する実測値を使います。旧版でバージョン不一致により`replay_mismatch`となった既存の送信停止記録は、DLL更新だけでは変更されません。
 
 結果の所有者と送信先は予約時点で固定されます。URLを変更すると旧送信先の結果は`server_mismatch`で保留され、別サーバへ送り替えません。元のURLへ戻すと元の状態に従って復旧します。Cookieや認証ticketはOutboxへ保存しません。起動をまたぐ結果復旧は永続保存できた結果が対象です。応答不明のreserveは起動をまたいで再送しません。
 
@@ -71,7 +71,7 @@
 
 ## ビルドとゲーム外検証
 
-Visual StudioのMSBuild、.NET Framework 4.8開発ツール、およびBeat Saber 1.39.1の参照DLLが必要です。`JBSLViewer.Qualifier.Core`はこのブランチ内でModとConsoleへソースを取り込み、Core専用DLLの配布は不要です。Consoleは署名済みのNuGet版Newtonsoft.Jsonを使い、通信・認証・進行状態・Outbox・BSOR形式を検証します。
+Visual StudioのMSBuild、.NET Framework 4.8開発ツール、およびBeat Saber 1.40.8の参照DLLが必要です。`JBSLViewer.Qualifier.Core`はこのブランチ内でModとConsoleへソースを取り込み、Core専用DLLの配布は不要です。Consoleは署名済みのNuGet版Newtonsoft.Jsonを使い、通信・認証・進行状態・Outbox・BSOR形式を検証します。
 
 Visual Studioでは`JBSLViewer.sln`を開くと、共有プロジェクト`JBSLViewer.Qualifier.Core`がソリューションエクスプローラーに表示されます。CoreのソースはModとConsoleに直接コンパイルされます。
 
@@ -82,13 +82,13 @@ Visual Studioでは`JBSLViewer.sln`を開くと、共有プロジェクト`JBSLV
 ```powershell
 .\build.ps1
 # 本体とMod参照を別フォルダーから読む場合
-.\build.ps1 -GameDirectory 'C:\Program Files (x86)\Steam\steamapps\common\Beat Saber' `
-    -ModReferencesDir 'C:\Program Files (x86)\Steam\steamapps\common\Beat Saber_1.39.1SS'
+.\build.ps1 -GameDirectory 'C:\Program Files (x86)\Steam\steamapps\common\Beat Saber_1.40.8' `
+    -ModReferencesDir 'C:\Program Files (x86)\Steam\steamapps\common\Beat Saber_1.40.8'
 ```
 
 NuGetが利用できない環境では、既存のpackage cacheを`-LocalNuGetFeed`へ指定できます。`-MSBuildPath`とAPI照合用の`-CecilPath`も指定可能です。API照合はUnityを起動せず、実DLLのメンバー参照、Harmonyの引数名、privateフィールドの型を確認します。
 
-DLLは`JBSLViewer/bin/Release/JBSLViewer.dll`、配布ZIP・検証ログ・SHA256は`artifacts/BS1.39.1/<日時>/`へ出力します。ZIPには`Plugins/JBSLViewer.dll`と`THIRD-PARTY-NOTICES.txt`を同梱します。Modのバージョンは0.4.0です。
+DLLは`JBSLViewer/bin/Release/JBSLViewer.dll`、配布ZIP・検証ログ・SHA256は`artifacts/BS1.40.8/<日時>/`へ出力します。ZIPには`Plugins/JBSLViewer.dll`と`THIRD-PARTY-NOTICES.txt`を同梱します。Modのバージョンは0.4.0です。
 
 仮サーバのvenvを準備した後、次のコマンドでローカルHTTP試験を実行できます。試験用DBは毎回隔離され、スクリプトが起動した仮サーバだけを終了します。別worktreeでは`-MockWorkspace`に`mock_servers`を含む作業ルートを指定してください。
 

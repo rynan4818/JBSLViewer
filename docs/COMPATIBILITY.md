@@ -1,30 +1,32 @@
-# BS1.39.1: Qualifier port
+# BS1.40.8: Qualifier port
 
-基準版: Beat Saber 1.39.1。Mod: 0.4.0。移植元: BS1.29.1 の `9c3fc19435e03a1fcafe727260e90e75da0204ac`。移植先の土台: main の `d040b594807584797a20e9220b0500a20ec2bb03`。
+基準版: Beat Saber 1.40.8。実DLL照合範囲: 1.40.0～1.40.8。Mod: 0.4.0。移植元はBS1.29.1の `9c3fc19`、土台はmainの `d040b59`。各ブランチにQualifierのソースを取り込み、版をまたぐ実行時分岐や共通DLLを追加していない。
 
-## 専用実装
+## このブランチのAPI
 
-- 譜面の識別と曲情報は `BeatmapKey` / `BeatmapLevel` を使用。
-- `noteWasAddedEvent` は `(NoteData, BeatmapObjectSpawnMovementData.NoteSpawnData)` の2引数。ジャンプ距離は `BeatmapObjectSpawnController.jumpDistance`、環境は `GameplayCoreSceneSetupData.targetEnvironmentInfo`。
-- ユーザー情報は `IPlatformUserModel.GetUserInfo(CancellationToken)`。Steam ticketとOculusのXPlatform tokenは本体の `PlatformAuthenticationTokenProvider` から取得。
-- シーン遷移イベントは `SceneTransitionType` を含む引数へ変更。Modifier変更はメニューのTickと開始直前の再確認で検出。
-- BSMLは1.12系のプロパティ名を使用。ゲーム参照とMod参照を分離し、ローカルの古い `ReferencePath` より指定したDLLを優先。
-- 予約時の実ゲーム版を保持し、開始前失敗結果にも渡す。Clear/Fail結果はBSORと同じ `Application.version` を維持。FPSは `Time.timeScale / Time.deltaTime`。
+- 譜面は `BeatmapKey` / `BeatmapLevel`。ノーツ追加は `(NoteData, NoteSpawnData)` の2引数で、独立した `NoteSpawnData` を使用。
+- `GameplayCoreInstaller` が登録する `VariableMovementDataProvider` を直接注入し、録画開始時とspawn初期化時のjumpDistanceを取得。環境は `targetEnvironmentInfo`。
+- 認証は `IPlatformUserModel.GetUserInfo(CancellationToken)` と本体の `PlatformAuthenticationTokenProvider`。
+- BSMLは1.12系のプロパティ名を使用。シーン遷移イベントは `SceneTransitionType` を含む形式。
+- 1.40.8の `NoteData.ScoringType` はArc/Chainへ名称が変わり、ArcHeadArcTail=6、ChainHeadArcTail=7、ChainLinkArcHead=8が追加されている。録画はBeatLeaderと同じ整数式 `((int)scoringType + 2) * 10000 + ...` を維持し、新しいIDもInt32でBSORへ保存する。名前による分岐や旧スコア表への変換は行わない。最大スコアは本体の `ScoreModel` と `GameplayModifiersModelSO` で算出。
+- FPSは `Time.timeScale / Time.deltaTime`。予約と開始前失敗結果には予約時の実ゲーム版、Clear/FailとBSORには同じ実ゲーム版を保持。
 
-## 参照と確認結果
+## 検証結果（2026-09-10）
 
-`C:\Program Files (x86)\Steam\steamapps\common\Beat Saber_1.39.1SS` の実DLLでReleaseビルドを実施。BSML 1.12.4、SiraUtil 3.1.14、BS Utils 1.14.2、LeaderboardCore 1.7.0を使用。
+`C:\Program Files (x86)\Steam\steamapps\common\Beat Saber_1.40.8` の実DLLでReleaseビルド成功。参照Mod: BSIPA 4.3.6、BSML 1.12.5、SiraUtil 3.2.1、BS Utils 1.14.2、LeaderboardCore 1.7.0。
 
-- C#テスト: 154項目。予約の一回性、認証世代、タイムアウト、Outbox永続化、送信再試行、JSONとBSOR、実ゲーム版の保持を検証。
-- API照合: 399項目。コンパイル済みModのゲーム/Modメンバー、Harmonyの対象と引数名、反射で読むprivateフィールド、manifestを実DLLと照合。
-- ローカルHTTP試験: 17項目。認証・予約・開始・結果・BSOR送信、同一キー100並列予約を検証。録画データは通信試験用の合成データ。
+- C#テスト154項目成功: 認証、予約の一回性、終了理由、Outbox、再送信、ランキングキャッシュ、JSON/BSOR、ゲーム版の保持。
+- API照合399項目成功。1.40.0、1.40.1、1.40.2、1.40.3、1.40.4、1.40.5、1.40.6、1.40.7、1.40.8の各本体DLLでも同じDLLを照合。Mod参照は1.40.8のセットで固定した。各本体でのMod導入・実機動作確認とは区別する。
+- 仮サーバHTTP試験17項目成功: 認証・予約・開始・結果と合成BSOR、同一キー100並列予約と重複結果の一貫性。
 
-ゲーム内でのUI・Zenjectの実行順・Steam/Oculusの実認証・実プレイの録画品質は未確認。コンパイルと静的照合の成功だけで実機動作を保証しない。
+1.40.8本体ソースでPlay、結果Finish、スコア処理順序、Modifier最大スコア、Swing、Pause/Restart UI、DI登録とイベント解除を確認。他の1.40.0～1.40.7は実DLLで利用APIを確認。ゲーム内UI、Zenject実行順、Steam/Oculus実認証、VR実プレイと録画品質は未確認。1.40.9以降は今回の範囲外。
 
-## 本体ソースとBeatLeader履歴
+## BeatLeader履歴
 
-本体ソース: `CameraSongScript/BeatSaber/SourceCode/1.39.1` の `GameplayCoreSceneSetupData`、`BeatmapObjectManager`、`ScoreController`、`GameplayModifiersModelSO`、`SaberMovementData`、`SaberSwingRatingCounter`、`PlatformAuthenticationTokenProvider` とメニュー/結果遷移を確認。
+`Source/manifest.json` の `22173627`（1.39.0→1.40.0）、実装の `d49f641d`（独立NoteSpawnDataとVariableMovementDataProvider）、`fbf1a1ff`（Compile 1.40.8+とFPS補正）を参照。録画のnoteID式・イベント・距離取得を本体APIと照合した。ライセンスは同梱の第三者表示を参照。
 
-BeatLeaderの `Source/manifest.json` のgameVersion変更と周辺実装を調査した。`6f2d8f2e` / `3d92b690` の1.39対応（rotation引数削除）、`70c4a02d` / `ecc7c732` の1.29.1へ戻した差分を逆方向の移植に参照。`fbf1a1ff` のFPS補正も反映した。ライセンスは同梱の第三者表示を参照。
+## 成果物と実機確認
 
-1.38.0ではノーツイベントが3引数のため、このDLLの対象に含めない。1.37.1系・1.40.8系・1.42.0系は別ブランチとする。
+`build.ps1` が `artifacts/BS1.40.8/<日時>/` にZIP、DLL、ライセンス、ビルドログ、API照合、self-testログ、SHA256を出力する。ゲームへのコピーは行わない。
+
+対応Modとテスト用リーグを用意し、Challenge予約→通常Play→Clear/Fail/Quit、Pause/Restart抑止、送信禁止、認証とOutbox再送信を実機で確認する。Arc/Chain複合ノーツを含む譜面のBSORも確認対象。
