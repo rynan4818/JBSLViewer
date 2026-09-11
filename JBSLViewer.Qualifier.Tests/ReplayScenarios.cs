@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using JBSLViewer.Qualifier.Core.Replay;
 namespace JBSLViewer.Qualifier.Tests {
+    using Replay = Core.Replay.Replay;
     // Independent BSOR V1 layout reader: checks the production encoder fixture against the wire specification.
     internal static class ReplayScenarios {
         private static string Text(BinaryReader r) { var length=r.ReadInt32();if(length<0 || length>16384) throw new FormatException("Invalid BSOR string length");var bytes=r.ReadBytes(length);if(bytes.Length!=length) throw new EndOfStreamException();return new UTF8Encoding(false,true).GetString(bytes); }

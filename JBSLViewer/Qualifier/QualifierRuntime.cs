@@ -18,6 +18,7 @@ namespace JBSLViewer.Qualifier
         private readonly QualifierDispatcher _dispatcher;
         private readonly PlayerIdentityService _identity;
         private readonly SubmissionEligibilityTracker _submission;
+        private readonly QualifierRoomState _room;
         private readonly ScoreManagerApiClient _api = new ScoreManagerApiClient();
         private readonly AuthenticationSession _auth;
         private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
@@ -48,8 +49,10 @@ namespace JBSLViewer.Qualifier
         public string Notice => _notice;
         public string OutboxDirectory => Path.Combine(IPA.Utilities.UnityGame.UserDataPath, "JBSLViewer", "QualifierOutbox");
 
-        public QualifierRuntime(QualifierDispatcher dispatcher, PlayerIdentityService identity, SubmissionEligibilityTracker submission)
-        { _dispatcher = dispatcher; _identity = identity; _submission = submission; _auth = new AuthenticationSession(_api, identity); }
+        public QualifierRuntime(QualifierDispatcher dispatcher, PlayerIdentityService identity, SubmissionEligibilityTracker submission, QualifierRoomState room)
+        { _dispatcher = dispatcher; _identity = identity; _submission = submission; _room = room; _auth = new AuthenticationSession(_api, identity); }
+        internal void StandardGameplayStarted() => _room.GameplayStarted();
+        internal void StandardGameplayFinished() => _room.GameplayFinished();
         public void Initialize()
         {
             Instance = this;

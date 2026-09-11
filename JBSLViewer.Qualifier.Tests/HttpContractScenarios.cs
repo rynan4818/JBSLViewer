@@ -11,6 +11,7 @@ using JBSLViewer.Qualifier.Core.Contracts;
 using JBSLViewer.Qualifier.Core.Outbox;
 using JBSLViewer.Qualifier.Core.Replay;
 namespace JBSLViewer.Qualifier.Tests {
+    using Replay = Core.Replay.Replay;
     internal static class HttpContractScenarios {
         public static async Task Run(string score,string web) {
             var identity=new TicketProvider();var clock=new SystemClock();var api=new ScoreManagerApiClient();

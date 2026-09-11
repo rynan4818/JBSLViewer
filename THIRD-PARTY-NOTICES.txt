@@ -25,3 +25,83 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+TournamentAssistant challenge-room UI and direct play
+Source: https://github.com/MatrikMoon/TournamentAssistant?tab=MIT-1-ov-file
+Revision: ab4021a49f889bc36059efe3d8a2431097f1ffa5
+Version-specific adaptations and review (SongUtils.cs, SongDetail.cs, QualifierCoordinator.cs):
+BS1.37.0: b7799d5ab31f182f0a7c78c1ff955dfedbf365a5; branch f50bbe1afb0ad8dc5240574d9f650d7e51249917 (adapted for JBSL BS1.37.1)
+BS1.39.1: 4cb97526b0a21117bd9bbdde2ea2824eb756b9e5; branch df540291cc65a57db4eccf77aa4449449a37ffa4
+BS1.40.8: d52c64d00ad7c84e073fe5c306928b5892cd47db; 91fa59d90797b4045d5799b9e97eab7773bc6dc9; branch 668b235b389765dcf9f5cdd50cab27d6171063d4
+BS1.42.0: 2c9b5156b4d4d46cc0dbd9c261c379b813ea92d4; branch cfacb28cff9af5170146c6516fba4877a96c8f11
+Copied/adapted files:
+JBSLViewer/Qualifier/UI/QualifierLeagueSelectionViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/ItemSelection.bsml
+JBSLViewer/Qualifier/UI/QualifierSongSelectionViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/SongSelection.bsml
+JBSLViewer/Qualifier/UI/QualifierStatusViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/RemainingAttempts.bsml
+JBSLViewer/Qualifier/UI/QualifierLeagueSelectionViewController.cs
+  from TournamentAssistant/UI/ViewControllers/ItemSelection.cs; TournamentAssistant/UI/CustomListItems/GenericItem.cs
+JBSLViewer/Qualifier/UI/QualifierSongSelectionViewController.cs
+  from TournamentAssistant/UI/ViewControllers/SongSelection.cs
+JBSLViewer/Qualifier/UI/QualifierSongListItem.cs
+  from TournamentAssistant/UI/CustomListItems/SongListItem.cs
+JBSLViewer/Qualifier/UI/QualifierStatusViewController.cs
+  from TournamentAssistant/UI/ViewControllers/RemainingAttempts.cs
+JBSLViewer/Qualifier/UI/QualifierSongDetailViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/SongDetail.bsml
+JBSLViewer/Qualifier/UI/QualifierSongDetailViewController.cs
+  from TournamentAssistant/UI/ViewControllers/SongDetail.cs; TournamentAssistant/Utilities/SongUtils.cs (GetJumpDistance)
+JBSLViewer/Qualifier/UI/QualifierFlowCoordinator.cs
+  from TournamentAssistant/UI/FlowCoordinators/QualifierCoordinator.cs; TournamentAssistant/UI/FlowCoordinators/EventSelectionCoordinator.cs
+JBSLViewer/Qualifier/UI/QualifierMenuEntry.cs
+  from TournamentAssistant/Plugin.cs (CreateMenuButton, MenuButtonPressed, disposal)
+JBSLViewer/Qualifier/QualifierDirectPlayController.cs
+  from TournamentAssistant/Utilities/SongUtils.cs (PlaySong); TournamentAssistant/UI/FlowCoordinators/QualifierCoordinator.cs (practice and finish callbacks)
+
+Original attribution comments in the remaining source (including BeatSaberMultiplayer) have been retained.
+The right-side leaderboard reuses JBSLViewer's LeaderboardMainViewController and its original BSML.
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+JBSLViewer license
+MIT License
+
+Copyright (c) 2025 rynan4818
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
