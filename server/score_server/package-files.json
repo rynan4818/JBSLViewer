@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "archiveRoot": "score_server",
+  "files": [
+    {
+      "source": "config.example.json",
+      "target": "config.example.json"
+    },
+    {
+      "source": "docs/API.md",
+      "target": "docs/API.md"
+    },
+    {
+      "source": "docs/OPERATIONS.md",
+      "target": "docs/OPERATIONS.md"
+    },
+    {
+      "source": "docs/THIRD_PARTY.md",
+      "target": "docs/THIRD_PARTY.md"
+    },
+    {
+      "source": "integration_client.py",
+      "target": "integration_client.py"
+    },
+    {
+      "source": "jbsl_score/__init__.py",
+      "target": "jbsl_score/__init__.py"
+    },
+    {
+      "source": "jbsl_score/__main__.py",
+      "target": "jbsl_score/__main__.py"
+    },
+    {
+      "source": "jbsl_score/admin.py",
+      "target": "jbsl_score/admin.py"
+    },
+    {
+      "source": "jbsl_score/api.py",
+      "target": "jbsl_score/api.py"
+    },
+    {
+      "source": "jbsl_score/config.py",
+      "target": "jbsl_score/config.py"
+    },
+    {
+      "source": "jbsl_score/contracts.py",
+      "target": "jbsl_score/contracts.py"
+    },
+    {
+      "source": "jbsl_score/database.py",
+      "target": "jbsl_score/database.py"
+    },
+    {
+      "source": "jbsl_score/documentation.py",
+      "target": "jbsl_score/documentation.py"
+    },
+    {
+      "source": "jbsl_score/errors.py",
+      "target": "jbsl_score/errors.py"
+    },
+    {
+      "source": "jbsl_score/http.py",
+      "target": "jbsl_score/http.py"
+    },
+    {
+      "source": "jbsl_score/timing.py",
+      "target": "jbsl_score/timing.py"
+    },
+    {
+      "source": "jbsl_score/locks.py",
+      "target": "jbsl_score/locks.py"
+    },
+    {
+      "source": "jbsl_score/maintenance.py",
+      "target": "jbsl_score/maintenance.py"
+    },
+    {
+      "source": "jbsl_score/metadata.py",
+      "target": "jbsl_score/metadata.py"
+    },
+    {
+      "source": "jbsl_score/openapi_schemas.py",
+      "target": "jbsl_score/openapi_schemas.py"
+    },
+    {
+      "source": "jbsl_score/replay.py",
+      "target": "jbsl_score/replay.py"
+    },
+    {
+      "source": "jbsl_score/replay_viewer.py",
+      "target": "jbsl_score/replay_viewer.py"
+    },
+    {
+      "source": "jbsl_score/reports.py",
+      "target": "jbsl_score/reports.py"
+    },
+    {
+      "source": "jbsl_score/security.py",
+      "target": "jbsl_score/security.py"
+    },
+    {
+      "source": "jbsl_score/service.py",
+      "target": "jbsl_score/service.py"
+    },
+    {
+      "source": "jbsl_score/static/app.js",
+      "target": "jbsl_score/static/app.js"
+    },
+    {
+      "source": "jbsl_score/static/documentation.css",
+      "target": "jbsl_score/static/documentation.css"
+    },
+    {
+      "source": "jbsl_score/static/favicon.svg",
+      "target": "jbsl_score/static/favicon.svg"
+    },
+    {
+      "source": "jbsl_score/static/guide.html",
+      "target": "jbsl_score/static/guide.html"
+    },
+    {
+      "source": "jbsl_score/static/guide.js",
+      "target": "jbsl_score/static/guide.js"
+    },
+    {
+      "source": "jbsl_score/static/help-content.js",
+      "target": "jbsl_score/static/help-content.js"
+    },
+    {
+      "source": "jbsl_score/static/help.js",
+      "target": "jbsl_score/static/help.js"
+    },
+    {
+      "source": "jbsl_score/static/index.html",
+      "target": "jbsl_score/static/index.html"
+    },
+    {
+      "source": "jbsl_score/static/rankings.html",
+      "target": "jbsl_score/static/rankings.html"
+    },
+    {
+      "source": "jbsl_score/static/rankings.js",
+      "target": "jbsl_score/static/rankings.js"
+    },
+    {
+      "source": "jbsl_score/static/style.css",
+      "target": "jbsl_score/static/style.css"
+    },
+    {
+      "source": "jbsl_score/static/swagger.html",
+      "target": "jbsl_score/static/swagger.html"
+    },
+    {
+      "source": "jbsl_score/static/swagger.js",
+      "target": "jbsl_score/static/swagger.js"
+    },
+    {
+      "source": "jbsl_score/static/vendor/swagger-ui/LICENSE",
+      "target": "jbsl_score/static/vendor/swagger-ui/LICENSE"
+    },
+    {
+      "source": "jbsl_score/static/vendor/swagger-ui/NOTICE",
+      "target": "jbsl_score/static/vendor/swagger-ui/NOTICE"
+    },
+    {
+      "source": "jbsl_score/static/vendor/swagger-ui/manifest.json",
+      "target": "jbsl_score/static/vendor/swagger-ui/manifest.json"
+    },
+    {
+      "source": "jbsl_score/static/vendor/swagger-ui/swagger-ui-bundle.js",
+      "target": "jbsl_score/static/vendor/swagger-ui/swagger-ui-bundle.js"
+    },
+    {
+      "source": "jbsl_score/static/vendor/swagger-ui/swagger-ui-bundle.js.LICENSE.txt",
+      "target": "jbsl_score/static/vendor/swagger-ui/swagger-ui-bundle.js.LICENSE.txt"
+    },
+    {
+      "source": "jbsl_score/static/vendor/swagger-ui/swagger-ui.css",
+      "target": "jbsl_score/static/vendor/swagger-ui/swagger-ui.css"
+    },
+    {
+      "source": "jbsl_score/upstream.py",
+      "target": "jbsl_score/upstream.py"
+    },
+    {
+      "source": "requirements.txt",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "scripts/check_dependencies.py",
+      "target": "scripts/check_dependencies.py"
+    },
+    {
+      "source": "setup.bat",
+      "target": "setup.bat"
+    },
+    {
+      "source": "start.bat",
+      "target": "start.bat"
+    },
+    {
+      "source": "DISTRIBUTION.md",
+      "target": "README.md"
+    },
+    {
+      "source": "deploy/systemd/jbsl-score.service",
+      "target": "deploy/systemd/jbsl-score.service"
+    }
+  ]
+}

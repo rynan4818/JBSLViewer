@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <NuGetAudit>false</NuGetAudit>
+    <ViewerRoot>$(MSBuildThisFileDirectory)..\..\..</ViewerRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Use the SDK's Newtonsoft.Json without a game DLL or NuGet download. -->
+    <Reference Include="Newtonsoft.Json"><HintPath>$(MSBuildSDKsPath)\..\Newtonsoft.Json.dll</HintPath><Private>true</Private></Reference>
+    <Compile Include="$(ViewerRoot)\JBSLViewer.Qualifier.Core\**\*.cs" Exclude="$(ViewerRoot)\JBSLViewer.Qualifier.Core\obj\**;$(ViewerRoot)\JBSLViewer.Qualifier.Core\bin\**" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer.Qualifier.Tests\*.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Models\Leaderboard.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Models\LeaderboardPageState.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Models\JBSL\LeaderboardJson.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Qualifier\QualifierRoomState.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Qualifier\QualifierBeatmap.cs" Condition="Exists('$(ViewerRoot)\JBSLViewer\Qualifier\QualifierBeatmap.cs')" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Qualifier\QualifierDirectPlayController.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Qualifier\StandardPlayAdapter.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Qualifier\QualifierScreenData.cs" />
+    <Compile Include="$(ViewerRoot)\JBSLViewer\Qualifier\Replay\ReplayModeDetector.cs" />
+    <Content Include="$(ViewerRoot)\JBSLViewer.Qualifier.Tests\Fixtures\**\*"><Link>Fixtures\%(RecursiveDir)%(Filename)%(Extension)</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+  </ItemGroup>
+</Project>

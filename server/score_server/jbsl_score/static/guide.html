@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>図付き運用ガイド · JBSL Score Server</title>
+  <link rel="icon" href="/admin/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/admin/static/documentation.css">
+  <script src="/admin/static/guide.js" defer></script>
+</head>
+<body class="guide-page">
+  <header class="doc-header">
+    <a class="doc-brand" href="/admin/">JBSL <span>SCORE MANAGER</span></a>
+    <nav aria-label="ドキュメントメニュー"><a href="/admin/">管理画面へ</a><a href="/admin/docs/">API仕様（Swagger UI）</a></nav>
+  </header>
+  <div class="guide-layout">
+    <nav class="guide-toc" aria-label="ガイドの目次">
+      <span class="doc-eyebrow">OPERATOR GUIDE</span><strong>運用ガイド</strong>
+      <a href="#lifecycle">01　Challengeの流れ</a><a href="#deadlines">02　締切と提出猶予</a>
+      <a href="#refunds">03　回数返却の条件</a><a href="#attempts">04　回数・残回数の見方</a>
+      <a href="#moderation">05　スコアの取消・復元</a><a href="#integration">06　JBSL-WEB連携</a>
+      <a href="#operations">07　設定とバックアップ</a><a href="#access">08　ログインと要求制限</a>
+      <a href="#logs">09　ログとトラブル対応</a><a href="#challenge-controls">10　強制終了と手動返却</a>
+    </nav>
+    <main class="guide-content">
+      <div class="guide-hero"><span class="doc-eyebrow">JBSL QUALIFIER / OPERATIONS</span><h1>判断に迷わないための<br>スコア管理ガイド</h1><p>予約から結果の採用まで。管理画面の数値や設定が、どの処理に影響するかを図と具体例で確認できます。</p><p class="guide-note">画面の「?」は短い説明、各説明のリンクはこのページの該当箇所を開きます。ここに示す値は初期値・説明用の例です。現在の設定は管理画面で確認してください。</p></div>
+
+      <section id="lifecycle" class="guide-section">
+        <span class="doc-eyebrow">01 / LIFECYCLE</span><h2>Challengeは予約から始まる</h2>
+        <p>ユーザー・League・譜面の組合せごとに、<strong>予約成功で1回を消費</strong>します。結果を受理すると「提出済み」になります。結果の受理と、ランキングでの採用は別の判定です。</p>
+        <figure><ol class="flow four"><li><span>01　予約成功</span><strong>予約済み</strong><small>1回消費・予約時設定を固定</small></li><li><span>02　開始通知</span><strong>プレイ中</strong><small>実際のGameplay開始を記録</small></li><li><span>03　終了結果を受理</span><strong>提出済み</strong><small>metadata・必要なReplayを保存</small></li><li><span>04　現在の採否</span><strong>ランキング対象／対象外</strong><small>取消状態も合わせて判定</small></li></ol><figcaption>開始通知が通信で失われても、正当な予約済み結果は提出できます。図のすべての通知が到着しなければ提出できない、という意味ではありません。</figcaption></figure>
+        <div class="guide-callout"><strong>結果が届かなかった場合</strong><p>結果受付期限または運用タイムアウトを超えると、15秒間隔の保守処理で「未提出・期限終了（abandoned）」にします。返却条件でabandonedを有効にしていた予約だけ、1回を返却します。</p></div>
+        <p>同じ予約・結果を同じキーと内容で再送しても、Challenge・結果・回数消費は増えません。再送の内容を変更すると競合として拒否します。</p>
+      </section>
+
+      <section id="deadlines" class="guide-section">
+        <span class="doc-eyebrow">02 / DEADLINES</span><h2>「予約の締切」と「提出の猶予」を分ける</h2>
+        <p>実効終了日時 <strong>E</strong> はJBSL-WEBの <code>qualifier.ends_at</code>、未指定ならLeagueの <code>end</code> です。提出猶予 <strong>G</strong> の既定は300秒です。</p>
+        <figure class="timeline-figure">
+          <div class="timeline-labels"><span>大会開催中</span><span>終了 E<br><strong>21:00</strong></span><span>受付期限 E + G<br><strong>21:05</strong></span></div>
+          <div class="timeline-row"><span class="timeline-name">新規予約</span><div class="timeline-track"><div class="time-open">実効終了日時まで</div><div class="time-closed">終了後は予約不可</div></div></div>
+          <div class="timeline-row"><span class="timeline-name">結果の提出・再送</span><div class="timeline-track"><div class="time-open">予約済みのChallenge</div><div class="time-grace">猶予300秒</div></div></div>
+          <figcaption>例: 標準の開始締切方式・運用タイムアウト無効。21:05:00ちょうどは受理し、それより後は保存済み結果の再送も拒否します。</figcaption>
+        </figure>
+        <div class="guide-table"><table><thead><tr><th>設定</th><th>何に適用するか</th><th>例</th></tr></thead><tbody>
+          <tr><td>新規Challengeの開始締切</td><td>新しい予約を受け付ける最終時刻。標準はE。曲時間方式はE−上流の曲時間。</td><td>E=21:00、曲3分なら曲時間方式の予約締切は20:57。</td></tr>
+          <tr><td>終了後の提出猶予</td><td>予約済み結果の提出・再送をE+Gまで許可する。予約時に固定。</td><td>E=21:00、G=300秒なら受付期限は21:05。</td></tr>
+          <tr><td>予約からのタイムアウト</td><td>未提出のまま予約から指定秒数を超えたChallengeを終了する。0は無効。予約時に固定。</td><td>20:58に予約、120秒なら21:00を超えて未提出の結果を拒否。猶予より先に終了する。</td></tr>
+        </tbody></table></div>
+        <p>曲時間方式では上流の <code>song_duration_seconds</code> が不明な譜面の新規予約を拒否します。Viewer自身の曲時間による開始判定も行われます。運用タイムアウトは受理済み結果の期限内再送には適用しません。</p>
+        <div class="deadline-example"><h3>猶予を変えて受付期限を確認する</h3><p>終了時刻を21:00:00とした例です。<strong>サーバ設定は変更しません。</strong></p><form id="deadline-example-form"><label for="example-grace">提出猶予（秒）</label><input id="example-grace" type="number" value="300" min="0" max="604800" step="1"><output id="example-deadline" for="example-grace" aria-live="polite">受付期限 21:05:00</output></form><p class="guide-note">0～604800秒（7日間）。新規予約の締切はこの計算では延びません。</p></div>
+        <h3>どの瞬間の時刻で判定するか</h3><ol class="flow four compact"><li>認証・所有者確認</li><li>Challengeの排他取得</li><li class="accent">サーバ時刻で期限判定</li><li>本文の読込み・検証・保存</li></ol>
+        <p>画面上の終了時刻やクライアント申告時刻ではなく、本文を読み始める直前のサーバ時刻を使います。期限内に受け付けた処理は、検証中に保守処理に終了扱いされないよう保護します。本文読込みには別途時間・容量上限があります。</p>
+      </section>
+
+      <section id="refunds" class="guide-section">
+        <span class="doc-eyebrow">03 / REFUNDS</span><h2>「対象外の受理」と「提出の拒否」は違う</h2>
+        <p>自動返却するかは、<strong>予約時に有効だった条件</strong>と、そのChallengeで受理した終了結果から決めます。初期設定はすべて返却なしです。運営判断による<a href="#challenge-controls">手動返却</a>は、この設定にかかわらず操作できます。</p>
+        <figure><div class="decision-flow"><div class="decision-start">終了結果が届く</div><div class="decision-branches"><div><strong>形式・所有者・期限・Replayの検証で拒否</strong><p>結果を保存しない。<br><b>この提出による返却なし</b></p></div><div><strong>正当な結果として受理</strong><p>ランキング対象なら返却なし。<br>対象外なら終了理由の条件を選ぶ。</p><div class="decision-outcome">予約時に条件ON → 1回返却<br>条件OFF → 消費を維持</div></div></div></div><figcaption>同じ結果の再送や複数の事情があっても、1つのChallengeで返却するのは最大1回です。結果未着は別途abandoned確定時に判定します。</figcaption></figure>
+        <div class="guide-table"><table><thead><tr><th>条件</th><th>返却判定の対象</th><th>運用上の意味</th></tr></thead><tbody>
+          <tr><td>開始前の失敗</td><td>preflight_rejected、プレイ観測0回、開始通知なし。</td><td>予約したがプレイに入れなかった場合。</td></tr>
+          <tr><td>開始時の失敗</td><td>preflight_rejectedで、プレイ観測または開始通知あり。</td><td>プレイに入った記録がある場合を独立して設定。</td></tr>
+          <tr><td>中断 / Quit</td><td>quitとして受理した対象外結果。</td><td>有効にすると中断して再挑戦できる。</td></tr>
+          <tr><td>Restart</td><td>restartとして受理した元Challengeの結果。</td><td>再挑戦は新しい予約。元Challengeを上書きしない。</td></tr>
+          <tr><td>終了理由不明</td><td>unknownとして受理した対象外結果。</td><td>結果が届かない状態とは別。</td></tr>
+          <tr><td>スコア提出無効</td><td>clear / failでも標準提出が無効。invalidReason=submission_disabled。</td><td>Quit・Restart等があればそちらを優先。</td></tr>
+          <tr><td>Replay生成失敗</td><td>clear / failでReplayを用意できない。invalidReason=replay_unavailable。</td><td>壊れた添付Replayを拒否したケースは含まない。</td></tr>
+          <tr><td>結果未着・タイムアウト</td><td>未提出のまま期限を超えてabandonedを確定。</td><td>故意の未送信も区別できず、再挑戦可能になる。</td></tr>
+        </tbody></table></div>
+        <p>clearだけでなく<strong>failもランキング対象になり得ます</strong>。スコア値・標準提出許可・Replay等の条件を満たした結果が対象です。</p>
+        <details><summary>API実装者向け: 終了理由の組合せ</summary><div class="guide-table"><table><thead><tr><th>endType</th><th>endState</th><th>endAction</th><th>invalidReason</th></tr></thead><tbody><tr><td>clear</td><td>cleared</td><td>none</td><td>対象ならnull、対象外ならsubmission_disabled / replay_unavailable</td></tr><tr><td>fail</td><td>failed</td><td>none</td><td>対象ならnull、対象外ならsubmission_disabled / replay_unavailable</td></tr><tr><td>quit</td><td>incomplete</td><td>quit</td><td>quit</td></tr><tr><td>restart</td><td>incomplete</td><td>restart</td><td>restarted</td></tr><tr><td>unknown</td><td>unknown</td><td>unknown</td><td>unknown</td></tr><tr><td>preflight_rejected</td><td>incomplete</td><td>none</td><td>preflight_rejected</td></tr></tbody></table></div><p>すべてのキー・型・制約は<a href="/admin/docs/#/Challenge/submitResult">Swaggerの結果提出</a>を参照してください。</p></details>
+      </section>
+
+      <section id="attempts" class="guide-section">
+        <span class="doc-eyebrow">04 / ATTEMPTS</span><h2>通し番号と、残回数を区別する</h2>
+        <div class="formula">未返却の使用回数 = 総Challenge数 − 返却数<br>残回数 = max(0, 上限 − 未返却の使用回数)</div>
+        <figure><ol class="flow three"><li><span>上限3回 / 初回</span><strong>#1 を予約</strong><small>使用1、返却0、残り2</small></li><li><span>設定条件に一致</span><strong>#1 を返却</strong><small>使用0、返却1、残り3</small></li><li><span>再挑戦</span><strong>#2 を予約</strong><small>使用1、返却1、残り2</small></li></ol><figcaption>返却しても次の番号は#2です。通し番号を巻き戻したり、同じ番号を使い回したりしません。</figcaption></figure>
+        <p>回数は<strong>SID × League ID × hash・characteristic・difficulty</strong>で分けます。ユーザー画面の「上限・残回数」は最後に検証した上流キャッシュが基準で、上限が不明なら「—」です。新規予約の時点では上流の最新上限を使います。</p>
+      </section>
+
+      <section id="moderation" class="guide-section">
+        <span class="doc-eyebrow">05 / MODERATION</span><h2>取り消しても記録を残し、復元できる</h2>
+        <p>詳細画面で提出内容を確認し、操作理由を1～500文字で記録して取消・復元します。元のmetadata・Replay・Challenge回数は変わりません。</p>
+        <figure><ol class="flow three"><li><span>同じユーザー・譜面</span><strong>100,000点を採用</strong><small>他に90,000点の有効結果あり</small></li><li><span>100,000点を取消</span><strong>90,000点を採用</strong><small>次に高い有効結果へ切替え</small></li><li><span>100,000点を復元</span><strong>100,000点を再採用</strong><small>元の対象資格を保って復元</small></li></ol><figcaption>取消は削除ではありません。別の有効結果がなければ、そのユーザー・譜面のランキング行がなくなります。</figcaption></figure>
+        <div class="formula">現在ランキング対象 = 元の結果が対象 AND 取消されていない</div>
+        <p><code>validForRanking</code> は元の対象資格、<code>canceled</code> は取消状態、<code>effectiveForRanking</code> は現在の採否です。元から対象外の結果を復元してもランキング対象にはなりません。</p>
+        <p>操作バージョンは提出ごとに保持します。他の管理者が先に変更した古い画面からの操作は409で拒否します。再取得して現在の状態と理由を確認してから操作してください。変更は監査ログと連携差分の両方に残ります。</p>
+      </section>
+
+      <section id="replay-viewer" class="guide-section">
+        <span class="doc-eyebrow">REPLAY</span><h2>提出したReplayをブラウザで再生する</h2>
+        <p>提出結果の「BeatLeaderで再生」「ArcViewerで再生」を押すと、別タブでその提出のReplayを開きます。既存の「Replayをダウンロード」も利用できます。</p>
+        <p>選んだ外部ビューアに、このReplayだけを取得できる閲覧用URLを渡します。URLは最長10分間有効で、発行元の管理者がログアウトした場合も失効します。URLを知った人は期限内に取得できます。読み込み済みのデータは回収されません。</p>
+        <p>HTTPSでの配信と、対応する譜面・音源の取得が必要です。ボタンが無効な場合はAPI公開URLのHTTPS設定を確認してください。未公開・削除済みの譜面は、別途譜面ZIPを選ぶ必要がある場合があります。</p>
+        <p>ポップアップが抑止された場合は、提出結果に表示される「再生ページを開く」を押してください。期限切れの場合は再生ボタンからもう一度開いてください。</p>
+      </section>
+      <section id="integration" class="guide-section">
+        <span class="doc-eyebrow">06 / INTEGRATION</span><h2>資格は上流から、結果は差分で連携する</h2>
+        <figure><div class="integration-flow"><div class="system-card"><span>JBSL-WEB</span><strong>参加者・期間・譜面・回数上限</strong></div><div class="connection-label">スコアサーバが取得<br>GET /leaderboard/api/{leagueId}<br><span aria-hidden="true">↓</span></div><div class="system-card accent"><span>スコア管理サーバ</span><strong>予約・提出・取消・復元を保存</strong></div><div class="connection-label">JBSL-WEBが差分を取得<br>GET /integration/v1/changes<br><span aria-hidden="true">↓</span></div><div class="system-card"><span>JBSL-WEB</span><strong>提出履歴とcursorを同時保存</strong></div></div><figcaption>結果連携はJBSL-WEB側からの読取りです。スコアサーバが外部へ自動投稿する方式ではありません。</figcaption></figure>
+        <h3>キャッシュの見方</h3><p>通常キャッシュは既定60秒。上流到達不能時に取得から300秒以内なら、statusに参考情報と <code>stale=true</code> を返す場合があります。<strong>新規予約では常に上流へ問い合わせ</strong>、障害時は予約せず回数も消費しません。予約済みの結果提出は上流の復旧を待ちません。</p>
+        <h3>差分の取り込み</h3><ol><li>CLIで読取り専用Bearerを発行し、JBSL-WEBの秘密設定へ保存する。</li><li>初回はafter=0でchangesを取得する。seqは昇順、イベントはsubmitted / canceled / restored / attempt_refunded。</li><li>submissionIdをキーに提出履歴を保存し、同じトランザクションでnextCursorを保存する。attempt_refundedも最新スナップショットとして反映する。</li><li>失敗時はcursorを進めず再取得する。Leagueフィルタごとに別cursorを保持する。</li></ol>
+        <p>イベントのsubmissionはその時点の値です。現在の採否は単一提出取得、またはleaderboardで確認します。自己ベストはユーザー・譜面ごとのmodifiedScore最大、同点の自己ベストは受信が早いもの、同点順位は1,1,3方式です。</p>
+        <p>サーバを過去のバックアップへ復元した場合、外部のcursorが復元先DBより先に進んでいることがあります。<strong>取り込み先の履歴・cursorを復元時点と整合させて再構築</strong>してください。詳しいパラメーターは<a href="/admin/docs/#/jbsl-web%E9%80%A3%E6%90%BA">Swaggerのjbsl-web連携API</a>にあります。</p>
+      </section>
+
+      <section id="operations" class="guide-section">
+        <span class="doc-eyebrow">07 / OPERATIONS</span><h2>設定の適用時点と、復旧の手順</h2>
+        <div class="guide-table"><table><thead><tr><th>項目</th><th>適用時点</th></tr></thead><tbody><tr><td>猶予・運用タイムアウト・返却条件</td><td>新しい予約から。既存Challengeは予約時設定を維持。</td></tr><tr><td>受付可否・開始締切方式・同時Challenge数</td><td>新しい予約の判定から。既存予約の提出期限は変えない。</td></tr><tr><td>Viewerセッション時間・同時セッション数</td><td>次のViewer認証から。既存セッションの期限は変えない。</td></tr><tr><td>キャッシュ・要求制限・ディスク下限</td><td>保存後の各要求の判定から。</td></tr><tr><td>自動バックアップ間隔・保持数</td><td>次の保守処理・バックアップ作成から。</td></tr><tr><td>ポート・URL・認証キー・HTTPS</td><td>config.json / 環境変数の変更後、サーバを再起動。</td></tr></tbody></table></div>
+        <p>設定は全項目とリビジョンをまとめて保存します。409 settings_conflictなら別の操作で設定が変わっています。画面を更新して、最新値を確認してから保存してください。「更新」は未保存の入力を破棄して再取得します。</p>
+        <h3>バックアップ</h3><p>既定は24時間ごと・7世代。概要の「バックアップを作成」でも実行できます。SQLiteのバックアップ機能でReplayを含むDBを保存し、整合性・回数集計・Replay SHA-256を検証してから確定します。作成成功後に保持数を超える古い世代を削除します。</p>
+        <figure><ol class="flow four compact"><li>DBをバックアップ</li><li>整合性・Replayを検証</li><li class="accent">検証済みファイルを確定</li><li>古い世代を整理</li></ol><figcaption>config.json、環境変数の秘密情報、証明書はDBに含まれません。別途保管してください。</figcaption></figure>
+        <h3>復元する場合</h3><ol><li>サーバを停止する。</li><li>CLIでバックアップを別の新しいデータフォルダへ復元する。既存DBへの上書きはしない。</li><li>config.jsonのdata_dirを復元先に変更する。</li><li>管理者は再ログインし、サービス用Bearerを再発行する。復元ではViewer・管理セッションとサービス用トークンを失効させる。</li><li>JBSL-WEBの取り込み履歴とcursorを整合させてから連携を再開する。</li></ol>
+        <pre><code>.venv\Scripts\python.exe -m jbsl_score backup
+.venv\Scripts\python.exe -m jbsl_score check
+.venv\Scripts\python.exe -m jbsl_score restore data\backups\&lt;バックアップ名&gt;.sqlite3 data-restored</code></pre>
+        <p>起動設定を別ファイルにしている場合は、各コマンドの <code>jbsl_score</code> の後に <code>--config &lt;設定JSONの絶対パス&gt;</code> を指定します。公開運用のHTTPS・OS権限・監視などは同梱の <code>docs/OPERATIONS.md</code> を参照してください。</p>
+      </section>
+
+      <section id="access" class="guide-section">
+        <span class="doc-eyebrow">08 / ACCESS</span><h2>3種類の認証を使い分ける</h2>
+        <div class="guide-table"><table><thead><tr><th>利用者</th><th>認証</th><th>用途</th></tr></thead><tbody><tr><td>JBSLViewer</td><td>Steam / Oculus ticket → jbslq_session Cookie</td><td>本人の資格確認・予約・開始・結果提出</td></tr><tr><td>JBSL-WEBサーバ</td><td>CLI発行の読取り専用Bearer</td><td>差分・現在スコア・残回数の取得</td></tr><tr><td>運営管理者</td><td>管理者名・パスワード → jbslq_admin Cookie</td><td>管理画面。変更にはX-CSRF-Tokenも必要</td></tr></tbody></table></div>
+        <p>それぞれの認証は相互に代用できません。管理ログインは8時間、同時5セッションまで。管理者作成・パスワード変更はCLI <code>set-admin</code> で行い、その管理者の既存セッションを失効させます。</p>
+        <p>Viewer認証は既定5要求/IP/分、status・meはそれぞれ60要求/ユーザー/分、予約は30、結果と開始通知はそれぞれ30が既定です。管理ログインは固定5要求/IP/分です。429では60秒待ち、同じ要求内容・キーで再送します。受付期限は待機中にも進むので、規模に合わせて制限と猶予を設定してください。</p>
+        <p>Swagger UIとこのガイドは管理用ポートでログイン前から閲覧できます。API仕様だけを表示し、実データの取得には従来どおり認証が必要です。Swaggerの実行ボタンは無効です。</p>
+      </section>
+
+      <section id="logs" class="guide-section">
+        <span class="doc-eyebrow">09 / TROUBLESHOOTING</span><h2>状況から確認する場所を選ぶ</h2>
+        <p>操作・受信ログの「所要時間」は、サーバでの受付・操作開始からログ記録までのミリ秒（ms）です。受信・上流通信・処理の待機を含みます。過去の未計測ログは「—」と表示します。</p>
+        <div class="guide-table"><table><thead><tr><th>状況・エラー</th><th>確認する内容</th></tr></thead><tbody>
+          <tr><td>結果未着</td><td>Challenge ID、状態、受付期限、予約時タイムアウト。未知の終了結果を受理したunknownとは区別する。</td></tr>
+          <tr><td>409 result_acceptance_expired</td><td>予約時の受付期限とサーバ受付時刻。既存予約は現在の猶予設定では延長されない。</td></tr>
+          <tr><td>409 attempts_exhausted</td><td>該当ユーザー・League・譜面の未返却の使用数と、上流の最新上限。</td></tr>
+          <tr><td>409 idempotency_conflict / result_conflict</td><td>再送キーと内容が初回と同じか。別の終了結果を同じChallengeへ送っていないか。</td></tr>
+          <tr><td>422 replay_invalid / replay_mismatch</td><td>metadataとReplayのSID・プラットフォーム・MapKey・multipliedScore・ゲームバージョン。</td></tr>
+          <tr><td>401 / 403 csrf_rejected</td><td>再ログイン。更新操作のCSRFと管理画面URL。Viewer用と管理用の認証を混同していないか。</td></tr>
+          <tr><td>429</td><td>要求数制限と再送間隔。監査一覧には保存しないため、応答のrequestIdとエラーログも確認。</td></tr>
+          <tr><td>502 upstream_invalid / 503 upstream_unavailable</td><td>JBSL-WEBの稼働、URL、Qualifier応答形式、キャッシュの取得エラー。</td></tr>
+          <tr><td>503 storage_unavailable</td><td>ディスク空き下限・DBロック・ファイル権限。必要な空き容量を確保する。</td></tr>
+          <tr><td>バックアップ失敗</td><td>概要の失敗表示、保存先容量、data/logsのエラー。成功した最終バックアップ日時も確認。</td></tr>
+        </tbody></table></div>
+        <p>requestIdで画面の拒否記録と <code>data/logs</code> のログを照合できます。監査一覧は秘密のticket・Cookie・パスワードを保存しません。操作理由などの運営情報は記録に残ります。</p>
+      </section>
+      <section id="challenge-controls" class="guide-section">
+        <span class="doc-eyebrow">10 / CHALLENGE CONTROLS</span><h2>進行中を強制終了し、消費した回数を返却する</h2>
+        <ol><li>管理画面の「ユーザー」で対象者の「提出状況を確認」を開く。</li><li>予約済み・プレイ中のチャレンジ行で「強制終了」を選ぶ。</li><li>SID・League・譜面・Challenge IDを確認して、操作理由を入力する。返却も必要なら「同時に1回返却する」を選ぶ。</li><li>確定後、状態と譜面ごとの使用・返却・残回数を確認する。</li></ol>
+        <p>終了済みの未返却チャレンジには「1回返却」を使用できます。自動返却設定がOFFでも操作でき、1つのチャレンジで返却できるのは自動・手動を合計して最大1回です。返却済みは再度返却できません。</p>
+        <div class="guide-callout"><strong>強制終了と返却の扱い</strong><p>返却を選ばず強制終了した場合、消費回数を維持します。その後の期限処理でも自動返却されません。必要になったときは「1回返却」を操作します。提出済みのスコア・Replay・ランキング採否は、手動返却をしても維持します。</p></div>
+        <p>強制終了後はサーバで開始通知・結果提出を受け付けません。参加者のBeat Saberを遠隔停止する機能ではありません。Viewerのローカル送信待ち記録は参加者側で確認します。</p>
+        <p>結果提出が先に確定した場合、強制終了は409で拒否します。画面を更新して最新状態を確認してください。同じ操作の再送で回数を重複変更しません。強制終了済みへの再送で返却チェックだけを変えても追加返却は行わず、「1回返却」を別途操作します。</p>
+        <p>操作・受信ログのchallenge_force_endedが強制終了、attempt_refundedが返却です。管理者名、理由、変更前後を記録します。残回数はViewer・JBSL-WEBの次回取得から反映されます。提出済みへの手動返却はattempt_refunded差分イベントにも記録します。</p>
+      </section>
+      <footer class="guide-footer"><a href="/admin/">管理画面へ戻る</a><a href="/admin/docs/">API仕様を確認する</a><a href="#lifecycle">ページ上部へ</a></footer>
+    </main>
+  </div>
+</body>
+</html>

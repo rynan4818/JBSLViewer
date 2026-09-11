@@ -1,0 +1,10 @@
+{
+  "league_id": 3023,
+  "league_title": "Offline Qualifier League",
+  "total_rank": [{"standing": 1, "sid": "76561198000000000", "name": "Test Player", "pos": 1, "acc": 95.5}],
+  "maps": [
+    {"title": "Contract Song A", "lid": "1001", "bsr": "ABC1", "hash": "0123456789ABCDEF0123456789ABCDEF01234567", "scores": [{"standing": 1, "sid": "76561198000000000", "name": "Test Player", "acc": 95.5, "pos": 1, "miss": 0}]},
+    {"title": "Contract Song B", "lid": "1002", "bsr": "ABC2", "hash": "89ABCDEF0123456789ABCDEF0123456789ABCDEF", "scores": []}
+  ]
+}
+

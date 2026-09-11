@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+data/
+config.json
+*.sqlite3*
+validation/latest/
+validation/bin/
+validation/obj/
+validation/.dotnet/
+validation/python-tests.xml
+validation/dependency-audit.json
+dist/
