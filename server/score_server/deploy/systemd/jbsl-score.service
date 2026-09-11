@@ -1,0 +1,24 @@
+# Change User, WorkingDirectory and ExecStart to match the installation.
+[Unit]
+Description=JBSL Score Server
+Wants=network-online.target jbsl-web-proxy.service
+After=network-online.target jbsl-web-proxy.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=jbsl
+WorkingDirectory=/opt/jbsl/score_server
+ExecStart=/opt/jbsl/score_server/.venv/bin/python -m jbsl_score run
+Restart=on-failure
+RestartSec=5
+# At least request_timeout_seconds + 90 (default 60 + 90).
+TimeoutStopSec=150
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

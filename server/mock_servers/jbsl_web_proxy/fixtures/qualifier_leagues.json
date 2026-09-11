@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "leagues": {
+    "3023": {
+      "isLive": true,
+      "isOpen": true,
+      "end": "2035-09-30T15:00:00Z",
+      "participants": [{"sid": "76561198000000000"}],
+      "qualifier": {
+        "enabled": true,
+        "submission_method": "jbsl_qualifier_v1",
+        "revision": "42",
+        "starts_at": "2020-01-01T00:00:00Z",
+        "ends_at": "2035-09-30T15:00:00Z"
+      },
+      "maps": [
+        {"lid": "1001", "characteristic": "Standard", "difficulty": "ExpertPlus", "song_duration_seconds": 180.0, "qualifier_attempt_limit": 3},
+        {"lid": "1002", "characteristic": "Standard", "difficulty": "Expert", "song_duration_seconds": 120.0, "qualifier_attempt_limit": 2}
+      ]
+    },
+    "3024": {
+      "isLive": true,
+      "isOpen": true,
+      "end": "2035-09-30T15:00:00Z",
+      "participants": [{"sid": "76561198000000000"}],
+      "qualifier": {"enabled": false, "submission_method": "external_leaderboard", "revision": "1", "starts_at": null, "ends_at": null},
+      "maps": [
+        {"lid": "2001", "characteristic": "Standard", "difficulty": "Hard", "song_duration_seconds": 90.0, "qualifier_attempt_limit": null}
+      ]
+    },
+    "3025": {
+      "isLive": true,
+      "isOpen": false,
+      "end": "2035-09-30T15:00:00Z",
+      "participants": [{"sid": "76561198000000000"}],
+      "qualifier": {"enabled": true, "submission_method": "jbsl_qualifier_v1", "revision": "7", "starts_at": "2020-01-01T00:00:00Z", "ends_at": "2035-09-30T15:00:00Z"},
+      "maps": [
+        {"lid": "3001", "characteristic": "Standard", "difficulty": "ExpertPlus", "song_duration_seconds": 180.0, "qualifier_attempt_limit": 1}
+      ]
+    }
+  }
+}
+

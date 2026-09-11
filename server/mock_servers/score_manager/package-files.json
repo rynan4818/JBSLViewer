@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "archiveRoot": "score_manager",
+  "files": [
+    {
+      "source": "__init__.py",
+      "target": "__init__.py"
+    },
+    {
+      "source": "__main__.py",
+      "target": "__main__.py"
+    },
+    {
+      "source": "admin_server.py",
+      "target": "admin_server.py"
+    },
+    {
+      "source": "auth/__init__.py",
+      "target": "auth/__init__.py"
+    },
+    {
+      "source": "auth/real_provider.py",
+      "target": "auth/real_provider.py"
+    },
+    {
+      "source": "auth/stub.py",
+      "target": "auth/stub.py"
+    },
+    {
+      "source": "bsor_reader.py",
+      "target": "bsor_reader.py"
+    },
+    {
+      "source": "config.py",
+      "target": "config.py"
+    },
+    {
+      "source": "control.py",
+      "target": "control.py"
+    },
+    {
+      "source": "database.py",
+      "target": "database.py"
+    },
+    {
+      "source": "documentation.py",
+      "target": "documentation.py"
+    },
+    {
+      "source": "errors.py",
+      "target": "errors.py"
+    },
+    {
+      "source": "inspection.py",
+      "target": "inspection.py"
+    },
+    {
+      "source": "jbsl_client.py",
+      "target": "jbsl_client.py"
+    },
+    {
+      "source": "requirements.txt",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "run.py",
+      "target": "run.py"
+    },
+    {
+      "source": "schemas.py",
+      "target": "schemas.py"
+    },
+    {
+      "source": "score_manager_server.py",
+      "target": "score_manager_server.py"
+    },
+    {
+      "source": "setup.bat",
+      "target": "setup.bat"
+    },
+    {
+      "source": "start.bat",
+      "target": "start.bat"
+    },
+    {
+      "source": "static/app.js",
+      "target": "static/app.js"
+    },
+    {
+      "source": "static/favicon.svg",
+      "target": "static/favicon.svg"
+    },
+    {
+      "source": "static/guide.html",
+      "target": "static/guide.html"
+    },
+    {
+      "source": "static/help.js",
+      "target": "static/help.js"
+    },
+    {
+      "source": "static/index.html",
+      "target": "static/index.html"
+    },
+    {
+      "source": "static/inspector.js",
+      "target": "static/inspector.js"
+    },
+    {
+      "source": "static/style.css",
+      "target": "static/style.css"
+    },
+    {
+      "source": "static/swagger.css",
+      "target": "static/swagger.css"
+    },
+    {
+      "source": "static/swagger.html",
+      "target": "static/swagger.html"
+    },
+    {
+      "source": "static/swagger.js",
+      "target": "static/swagger.js"
+    },
+    {
+      "source": "static/vendor/swagger-ui/LICENSE",
+      "target": "static/vendor/swagger-ui/LICENSE"
+    },
+    {
+      "source": "static/vendor/swagger-ui/NOTICE",
+      "target": "static/vendor/swagger-ui/NOTICE"
+    },
+    {
+      "source": "static/vendor/swagger-ui/manifest.json",
+      "target": "static/vendor/swagger-ui/manifest.json"
+    },
+    {
+      "source": "static/vendor/swagger-ui/swagger-ui-bundle.js",
+      "target": "static/vendor/swagger-ui/swagger-ui-bundle.js"
+    },
+    {
+      "source": "static/vendor/swagger-ui/swagger-ui-bundle.js.LICENSE.txt",
+      "target": "static/vendor/swagger-ui/swagger-ui-bundle.js.LICENSE.txt"
+    },
+    {
+      "source": "static/vendor/swagger-ui/swagger-ui.css",
+      "target": "static/vendor/swagger-ui/swagger-ui.css"
+    },
+    {
+      "source": "traffic.py",
+      "target": "traffic.py"
+    },
+    {
+      "source": "DISTRIBUTION.md",
+      "target": "README.md"
+    }
+  ]
+}
+
