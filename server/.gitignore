@@ -1,0 +1,57 @@
+# Local configuration: only reviewed templates belong in this repository.
+[Cc]onfig.json
+[Cc]onfig*.json
+![Cc]onfig.example.json
+.env
+.env.*
+*.local.json
+*credentials*.json
+*.pem
+*.key
+*.pfx
+*.p12
+.cloudflared/
+
+# Operational state, submissions, authentication state, and backups.
+data/
+data_*/
+data-*/
+admin_data/
+admin_data_*/
+legacy_data/
+legacy_data_*/
+logs/
+log/
+backup/
+backups/
+replays/
+*.db
+*.db-*
+*.sqlite*
+*.bsor*
+*.log
+*.log.err
+*.bak
+*.tmp
+
+# Local dependencies and generated output.
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+dist/
+*.zip
+bin/
+obj/
+
+# Keep only the two source definitions needed by verify.bat.
+**/validation/**
+!score_server/validation/
+!score_server/validation/ViewerContract.csproj
+!score_server/validation/NuGet.Config

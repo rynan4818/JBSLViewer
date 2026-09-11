@@ -1,0 +1,24 @@
+# Change User, WorkingDirectory and ExecStart to match the installation.
+[Unit]
+Description=JBSL WEB Relay
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=jbsl
+WorkingDirectory=/opt/jbsl/jbsl_web_proxy
+ExecStart=/opt/jbsl/jbsl_web_proxy/.venv/bin/python run.py run
+Restart=on-failure
+RestartSec=5
+# At least --shutdown-timeout + 60 (default 90 + 60).
+TimeoutStopSec=150
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

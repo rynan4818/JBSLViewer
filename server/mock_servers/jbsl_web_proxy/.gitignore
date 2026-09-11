@@ -1,0 +1,13 @@
+.venv/
+.venv-admin/
+__pycache__/
+.pytest_cache/
+data/
+admin_data/
+validation/latest/
+validation/bin/
+validation/obj/
+*.log
+*.log.err
+legacy_data/
+dist/
