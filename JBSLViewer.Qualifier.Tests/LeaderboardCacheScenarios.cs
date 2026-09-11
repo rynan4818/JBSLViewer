@@ -8,7 +8,7 @@ using JBSLViewer.Qualifier.Core.Contracts;
 using Newtonsoft.Json.Linq;
 
 // Only infrastructure around the linked production cache is replaced in this assembly.
-namespace JBSLViewer { internal static class Plugin { public static TestLog Log=new TestLog(); } internal sealed class TestLog { public int Errors;public void Error(string message) { Errors++; } } }
+namespace JBSLViewer { internal static class Plugin { public static TestLog Log=new TestLog(); } internal sealed class TestLog { public int Errors;public void Error(string message) { Errors++; } public void Warn(string message) { } public void Info(string message) { } } }
 namespace JBSLViewer.Configuration { internal sealed class PluginConfig { public static PluginConfig Instance=new PluginConfig();public string leaderboardApiUrl="http://cache-test/leaderboard/"; } }
 namespace JBSLViewer.Util { internal static class HttpUtility { public static Func<string,Task<string>> Fetch;public static Task<string> GetHttpContentAsync(string url) { return Fetch(url); } } }
 namespace JBSLViewer.Models { public sealed class LatestUpdate { public DateTime _latest=DateTime.MinValue; } }

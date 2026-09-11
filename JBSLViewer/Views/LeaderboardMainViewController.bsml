@@ -7,8 +7,8 @@
     </stack>
   </horizontal>
   <bg anchor-pos-x="-45" anchor-pos-y="-15">
-    <page-button id="up_button" icon="JBSLViewer.Images.sankaku.png" dir="Up" anchor-pos-y="12" pref-width="5" pref-height="5" on-click="PageUp"/>
-    <page-button id="down_button" icon="JBSLViewer.Images.sankaku.png" dir="Down" anchor-pos-y="-12" pref-width="5" pref-height="5" on-click="PageDown"/>
+    <page-button id="up_button" icon="JBSLViewer.Images.sankaku.png" dir="Up" anchor-pos-y="12" pref-width="5" pref-height="5"/>
+    <page-button id="down_button" icon="JBSLViewer.Images.sankaku.png" dir="Down" anchor-pos-y="-12" pref-width="5" pref-height="5"/>
   </bg>
   <vertical pref-width='86' pref-height='60' anchor-pos-x="3" anchor-pos-y="5.5" horizontal-fit='PreferredSize' vertical-fit='PreferredSize'>
     <custom-list id="list" cell-size="6" visible-cells="8" contents="entries">

@@ -8,6 +8,7 @@ namespace JBSLViewer.Installers
     {
         public override void InstallBindings()
         {
+            Container.Bind<QualifierRoomState>().AsSingle();
             Container.BindInterfacesAndSelfTo<QualifierDispatcher>().AsSingle().NonLazy();
             Container.BindExecutionOrder<QualifierDispatcher>(-1000);
             Container.BindInterfacesAndSelfTo<PlayerIdentityService>().AsSingle().NonLazy();

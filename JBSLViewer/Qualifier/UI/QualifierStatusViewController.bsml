@@ -1,0 +1,35 @@
+<!--
+Portions copied/adapted from TournamentAssistant.
+Source: https://github.com/MatrikMoon/TournamentAssistant?tab=MIT-1-ov-file
+Original: TournamentAssistant/UI/ViewControllers/RemainingAttempts.bsml
+Revision: ab4021a49f889bc36059efe3d8a2431097f1ffa5
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<vertical child-control-height='false'
+          xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+          xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
+  <horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
+    <text id='text' text='~text-string' align='Center' font-size='5'></text>
+  </horizontal>
+  <text id='message' align='Center' font-size='3' word-wrapping='true' pref-width='125'/>
+  <button id='retry' text='RETRY / REAUTHENTICATE' on-click='retry' pref-width='55' pref-height='6' font-size='2.5'/>
+</vertical>
