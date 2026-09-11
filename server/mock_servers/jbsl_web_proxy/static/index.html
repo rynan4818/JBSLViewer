@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JBSL WEB Relay</title><link rel="icon" href="/static/favicon.svg"><link rel="stylesheet" href="/static/style.css"></head>
+<body>
+<section id="login-view" class="login-shell" hidden>
+<form id="login-form" class="login-card">
+<img class="login-icon" src="/static/favicon.svg" alt="" width="44" height="44">
+<div class="eyebrow">JBSL QUALIFIER / OPERATIONS</div>
+<h1>WEB Relay</h1><p class="muted">リーグ設定とAPI中継の検証管理</p>
+<label for="username">ユーザー名<input id="username" name="username" autocomplete="username" required maxlength="64"></label>
+<label for="password">パスワード<input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"></label>
+<button id="login-submit" type="submit" class="primary">ログイン</button>
+<p id="login-error" role="alert" class="error"></p>
+<a id="public-qualifiers" class="login-public-link" href="/qualifiers/">開催中のQualifierリーグ<span>ログイン不要 · SIDの追加はこちら ↗</span></a>
+<p class="login-note muted">初回の管理者はサーバ起動時に作成します。</p>
+<a class="login-guide" href="/guide" target="_blank" rel="noopener">図付きガイドを開く ↗</a>
+</form></section>
+<noscript><p class="script-required">ログインするにはブラウザのJavaScriptを有効にしてください。</p></noscript>
+<div id="app-view" hidden>
+<aside class="sidebar"><a class="brand" href="/admin/"><img src="/static/favicon.svg" alt="" width="38" height="38"><span>JBSL <b>WEB Relay</b></span></a><div class="local-tag" id="environment-tag">● JBSL TEST ENVIRONMENT</div>
+<nav aria-label="管理メニュー"><button class="nav active" data-page="leagues">リーグ設定<span>01</span></button><button class="nav" data-page="settings">サーバ挙動<span>02</span></button><button class="nav" data-page="traffic">API 中継ログ<span>03</span></button><button class="nav" data-page="state">実行状態<span>04</span></button></nav>
+<div class="nav-bottom"><a id="proxy-docs" href="#" target="_blank" rel="noopener">中継 API · Swagger ↗</a><a href="/guide" target="_blank" rel="noopener">図付きデバッグガイド ↗</a><p>JBSLViewer / Qualifier v1<br><span id="environment-note">TEST ONLY · 検証用</span></p></div><div class="account"><span id="operator"></span><button id="logout" type="button">ログアウト</button></div></aside>
+<main><header class="topbar"><span>JBSLViewer 開発ツール</span><span id="connection">接続中…</span></header>
+<div class="workspace"><div id="notice" role="status" aria-live="polite"></div>
+<section id="page-leagues" class="page"><div class="page-title"><div><div class="eyebrow">LEAGUE CONFIGURATION</div><h1>リーグ設定</h1><p>実リーグに Qualifier の設定を重ねて、Viewer の動作を確認します。未設定リーグは元のJSONをそのまま中継します。</p></div><button id="refresh-live" class="primary">実リーグ一覧を更新</button></div>
+<div class="stats"><article><span>開催中の実リーグ</span><strong id="active-count">—</strong><small>実 JBSL-WEB から取得</small></article><article><span>Qualifier 設定済み</span><strong id="enabled-count">—</strong><small>保存済みのローカル設定</small></article><article><span>実リーグの中継モード</span><strong id="upstream-mode" class="text-stat">—</strong><small id="fault-badge">—</small></article></div>
+<article class="panel"><div class="panel-title"><div><h2>開催中のリーグ <button class="help" data-help="active" aria-label="開催中のリーグの説明">?</button></h2><p id="fetched-at">まだ取得していません。</p></div><label class="search-label">リーグを検索<input id="league-search" type="search" placeholder="名前 または ID"></label></div><div id="active-error" class="callout warn" hidden></div><div id="active-leagues" class="league-list"></div></article>
+<article class="panel"><div class="panel-title"><div><h2>保存済みの設定 <button class="help" data-help="sample" aria-label="保存済みの設定の説明">?</button></h2><p>サンプルは通信なしで利用できます。終了した実リーグの設定もここに残ります。</p></div></div><div id="saved-leagues" class="league-list"></div></article>
+</section>
+<section id="page-settings" class="page" hidden><div class="page-title"><div><div class="eyebrow">SERVER BEHAVIOR</div><h1>サーバ挙動</h1><p>保存後のリクエストに反映されます。進行中の処理は開始時の設定を使います。</p></div><a class="button" href="/guide#scenarios" target="_blank">再現手順を見る ↗</a></div><form id="settings-form"><div id="behavior-fields"></div><div class="savebar"><button type="submit" class="primary">サーバ設定を保存</button><button type="button" id="reload-settings">設定を再読込</button><span>再起動しても設定は保持されます。</span></div></form></section>
+<section id="page-traffic" class="page" hidden><div class="page-title"><div><div class="eyebrow">REQUEST INSPECTOR</div><h1>API 中継ログ</h1><p>同じ Request ID を持つ通信を追うと、スコア API → 中継 → 実サーバの流れを確認できます。</p></div><button class="help" data-help="logs" aria-label="API 中継ログの説明">?</button></div><article class="panel"><div class="toolbar"><label>通信の種類<select id="log-role"><option value="all">すべて</option><option value="proxy">中継 API</option><option value="upstream">実 JBSL-WEB / BeatSaver</option><option value="admin">管理操作</option></select></label><label class="check"><input id="log-errors" type="checkbox">エラーのみ</label><label class="check"><input id="log-auto" type="checkbox" checked>自動更新（3秒）</label><button id="reload-logs">更新</button><button id="export-logs">JSON を保存</button><button id="clear-logs">表示ログを消去</button></div><p id="log-count" class="muted"></p><div class="table-scroll"><table><thead><tr><th>時刻</th><th>種類 / 出所</th><th>メソッド・パス</th><th>HTTP</th><th>所要時間</th><th>Request ID / エラー</th></tr></thead><tbody id="log-rows"></tbody></table></div></article></section>
+<section id="page-state" class="page" hidden><div class="page-title"><div><div class="eyebrow">RUNTIME STATE</div><h1>実行状態</h1><p>この中継サーバのリクエスト数と接続先を確認します。</p></div><button id="reload-state">状態を更新</button></div><div class="stats" id="state-counts"></div>
+<article class="panel"><h2>接続先 <button class="help" data-help="connection" aria-label="接続先の説明">?</button></h2><p>Viewer のリーグ取得先を変更します。スコア提出先は利用するスコアサーバ側で設定してください。</p><pre id="viewer-config"></pre><p class="muted">activeLeagueApiUrl・playlistSongsApiUrl などは実 JBSL-WEB のまま使用します。</p><div id="api-links" class="actions"></div></article>
+<article class="panel"><h2>実スコアサーバと併用</h2><p>実スコアサーバの <code>jbsl_web_url</code> を上記の中継APIのベースURLへ変更します。接続先は上記のViewer設定を参照してください。</p><p>仮スコア管理を使う場合は、その「サーバ挙動」でリーグ取得先を指定します。リーグの参加者SIDと、スコアサーバで認証するSIDを揃えてください。</p></article>
+<details class="panel"><summary id="runtime-details-label">リクエスト数</summary><pre id="request-counts"></pre><p id="data-path" class="mono" hidden></p></details></section>
+<footer>リーグ設定はこの中継サーバのフォルダに保存されます。実 JBSL-WEB と BeatSaver への通信は公開 API の GET のみです。</footer></div></main>
+<dialog id="editor"><form id="league-form"><header class="dialog-head"><div><div class="eyebrow">JBSL-WEB 設定画面の模擬</div><h2 id="editor-title">リーグ設定</h2><p id="editor-revision"></p></div><button type="button" id="close-editor" aria-label="リーグ設定を閉じる">✕</button></header><div class="dialog-body"><div id="editor-notes" class="callout"></div><div class="field-grid">
+<div class="field"><label class="check" for="q-enabled"><input id="q-enabled" type="checkbox">Qualifier を有効にする</label><button type="button" class="help" data-help="enabled" aria-label="Qualifier を有効にするの説明">?</button></div>
+<div class="field"><label for="q-method">提出方式</label><button type="button" class="help" data-help="method" aria-label="提出方式の説明">?</button><select id="q-method"><option value="external_leaderboard">外部リーダーボード</option><option value="jbsl_qualifier_v1">JBSL Qualifier v1</option></select></div>
+<div class="field"><label class="check" for="q-live"><input id="q-live" type="checkbox">リーグ稼働中（isLive）</label><button type="button" class="help" data-help="open" aria-label="リーグ稼働中の説明">?</button></div>
+<div class="field"><label class="check" for="q-open"><input id="q-open" type="checkbox">参加受付中（isOpen）</label><button type="button" class="help" data-help="open" aria-label="参加受付中の説明">?</button></div>
+<div class="field"><label for="q-end">リーグ終了日時（ローカル時刻）</label><button type="button" class="help" data-help="window" aria-label="リーグ終了日時の説明">?</button><input id="q-end" type="datetime-local" step="0.001" required></div>
+<div class="field"><label for="q-start">Qualifier 開始日時（ローカル時刻・任意）</label><button type="button" class="help" data-help="window" aria-label="Qualifier 開始日時の説明">?</button><input id="q-start" type="datetime-local" step="0.001"></div>
+<div class="field"><label for="q-until">Qualifier 終了日時（ローカル時刻・任意）</label><button type="button" class="help" data-help="window" aria-label="Qualifier 終了日時の説明">?</button><input id="q-until" type="datetime-local" step="0.001"></div>
+<div class="field"><span>実効終了日時</span><button type="button" class="help" data-help="window" aria-label="実効終了日時の説明">?</button><output id="effective-end"></output></div></div>
+<p id="editor-timezone" class="muted"></p>
+<div class="field"><label class="check" for="q-auto-sids"><input id="q-auto-sids" type="checkbox" checked>元のランキングのSIDを参加者に自動追加</label><button type="button" class="help" data-help="participants" aria-label="SID自動追加の説明">?</button><p id="ranking-sids" class="muted"></p></div>
+<div class="field participant-field"><label for="q-participants">追加の参加者 SID（1行に1人）</label><button type="button" class="help" data-help="participants" aria-label="参加者 SID の説明">?</button><textarea id="q-participants" rows="3" placeholder="76561198000000000"></textarea><button id="add-sid" type="button">参加者追加用 SID を追加</button></div>
+<h3>譜面ごとの設定 <button type="button" class="help" data-help="maps" aria-label="譜面ごとの設定の説明">?</button></h3><p class="muted">元の hash・lid・ランキングは保持されます。実中継モードでは設定を開くとBeatSaverから曲時間を自動入力します。取得できない場合は既存値（未設定なら空欄）を保持します。</p><div id="map-fields"></div>
+<div id="editor-error" class="callout warn" role="alert" hidden></div><details id="preview-details"><summary>中継後の JSON プレビュー（保存前）</summary><pre id="preview-json">「JSON をプレビュー」で検証できます。</pre></details></div>
+<div class="dialog-foot"><button type="submit" class="primary">リーグ設定を保存</button><button type="button" id="preview-league">JSON をプレビュー</button><button type="button" id="probe-league">保存済み API を確認</button><span>保存ごとに revision が増加します。</span></div></form></dialog>
+<dialog id="help-dialog"><div class="dialog-head"><h2 id="help-title"></h2><button id="close-help" aria-label="説明を閉じる">✕</button></div><div class="dialog-body"><p id="help-text"></p><a id="help-link" href="/guide" target="_blank" rel="noopener">図付きの詳細解説を開く ↗</a></div></dialog>
+</div><script src="/static/help.js"></script><script src="/static/app.js"></script></body></html>

@@ -1,0 +1,17 @@
+{
+  "data_dir": "data",
+  "api_host": "127.0.0.1",
+  "api_port": 18081,
+  "api_public_url": "http://127.0.0.1:18081",
+  "admin_host": "127.0.0.1",
+  "admin_port": 18763,
+  "admin_public_url": "http://127.0.0.1:18763",
+  "allow_http_loopback": true,
+  "jbsl_web_url": "https://jbsl-web.herokuapp.com",
+  "jbsl_web_token": "",
+  "steam_api_key": "",
+  "oculus_enabled": true,
+  "trusted_proxy_ips": "",
+  "ssl_certfile": "",
+  "ssl_keyfile": ""
+}

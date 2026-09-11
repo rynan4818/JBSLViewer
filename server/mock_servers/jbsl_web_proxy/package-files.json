@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "archiveRoot": "jbsl_web_proxy",
+  "files": [
+    {
+      "source": "__main__.py",
+      "target": "__main__.py"
+    },
+    {
+      "source": "admin_server.py",
+      "target": "admin_server.py"
+    },
+    {
+      "source": "admin_auth.py",
+      "target": "admin_auth.py"
+    },
+    {
+      "source": "public_qualifiers.py",
+      "target": "public_qualifiers.py"
+    },
+    {
+      "source": "config.py",
+      "target": "config.py"
+    },
+    {
+      "source": "config.example.json",
+      "target": "config.json"
+    },
+    {
+      "source": "beatsaver.py",
+      "target": "beatsaver.py"
+    },
+    {
+      "source": "scoresaber.py",
+      "target": "scoresaber.py"
+    },
+    {
+      "source": "control.py",
+      "target": "control.py"
+    },
+    {
+      "source": "documentation.py",
+      "target": "documentation.py"
+    },
+    {
+      "source": "errors.py",
+      "target": "errors.py"
+    },
+    {
+      "source": "fixtures/qualifier_leagues.json",
+      "target": "fixtures/qualifier_leagues.json"
+    },
+    {
+      "source": "fixtures/upstream/leaderboard_3023.json",
+      "target": "fixtures/upstream/leaderboard_3023.json"
+    },
+    {
+      "source": "fixtures/upstream/leaderboard_3024.json",
+      "target": "fixtures/upstream/leaderboard_3024.json"
+    },
+    {
+      "source": "fixtures/upstream/leaderboard_3025.json",
+      "target": "fixtures/upstream/leaderboard_3025.json"
+    },
+    {
+      "source": "jbsl_web_proxy_server.py",
+      "target": "jbsl_web_proxy_server.py"
+    },
+    {
+      "source": "requirements.txt",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "run.py",
+      "target": "run.py"
+    },
+    {
+      "source": "schemas.py",
+      "target": "schemas.py"
+    },
+    {
+      "source": "setup.bat",
+      "target": "setup.bat"
+    },
+    {
+      "source": "start.bat",
+      "target": "start.bat"
+    },
+    {
+      "source": "static/app.js",
+      "target": "static/app.js"
+    },
+    {
+      "source": "static/favicon.svg",
+      "target": "static/favicon.svg"
+    },
+    {
+      "source": "static/guide.html",
+      "target": "static/guide.html"
+    },
+    {
+      "source": "static/help.js",
+      "target": "static/help.js"
+    },
+    {
+      "source": "static/index.html",
+      "target": "static/index.html"
+    },
+    {
+      "source": "static/qualifiers.html",
+      "target": "static/qualifiers.html"
+    },
+    {
+      "source": "static/qualifiers.js",
+      "target": "static/qualifiers.js"
+    },
+    {
+      "source": "static/qualifiers.css",
+      "target": "static/qualifiers.css"
+    },
+    {
+      "source": "static/style.css",
+      "target": "static/style.css"
+    },
+    {
+      "source": "static/swagger.css",
+      "target": "static/swagger.css"
+    },
+    {
+      "source": "static/swagger.html",
+      "target": "static/swagger.html"
+    },
+    {
+      "source": "static/swagger.js",
+      "target": "static/swagger.js"
+    },
+    {
+      "source": "static/vendor/swagger-ui/LICENSE",
+      "target": "static/vendor/swagger-ui/LICENSE"
+    },
+    {
+      "source": "static/vendor/swagger-ui/NOTICE",
+      "target": "static/vendor/swagger-ui/NOTICE"
+    },
+    {
+      "source": "static/vendor/swagger-ui/manifest.json",
+      "target": "static/vendor/swagger-ui/manifest.json"
+    },
+    {
+      "source": "static/vendor/swagger-ui/swagger-ui-bundle.js",
+      "target": "static/vendor/swagger-ui/swagger-ui-bundle.js"
+    },
+    {
+      "source": "static/vendor/swagger-ui/swagger-ui-bundle.js.LICENSE.txt",
+      "target": "static/vendor/swagger-ui/swagger-ui-bundle.js.LICENSE.txt"
+    },
+    {
+      "source": "static/vendor/swagger-ui/swagger-ui.css",
+      "target": "static/vendor/swagger-ui/swagger-ui.css"
+    },
+    {
+      "source": "traffic.py",
+      "target": "traffic.py"
+    },
+    {
+      "source": "DISTRIBUTION.md",
+      "target": "README.md"
+    },
+    {
+      "source": "deploy/systemd/jbsl-web-proxy.service",
+      "target": "deploy/systemd/jbsl-web-proxy.service"
+    }
+  ]
+}

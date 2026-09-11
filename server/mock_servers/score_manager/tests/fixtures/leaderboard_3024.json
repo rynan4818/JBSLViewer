@@ -1,0 +1,33 @@
+{
+  "league_id": 3024,
+  "league_title": "Offline Non Qualifier League",
+  "total_rank": [],
+  "maps": [
+    {
+      "title": "External Song",
+      "lid": "2001",
+      "bsr": "EXT1",
+      "hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "scores": [],
+      "characteristic": "Standard",
+      "difficulty": "Hard",
+      "song_duration_seconds": 90.0,
+      "qualifier_attempt_limit": null
+    }
+  ],
+  "isLive": true,
+  "isOpen": true,
+  "end": "2035-09-30T15:00:00Z",
+  "participants": [
+    {
+      "sid": "76561198000000000"
+    }
+  ],
+  "qualifier": {
+    "enabled": false,
+    "submission_method": "external_leaderboard",
+    "revision": "1",
+    "starts_at": null,
+    "ends_at": null
+  }
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>開催中のQualifierリーグ · JBSL</title>
+  <link rel="icon" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/qualifiers.css">
+  <script src="/static/qualifiers.js" defer></script>
+</head>
+<body>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="/qualifiers/"><img src="/static/favicon.svg" width="36" height="36" alt=""><span>JBSL <b>Qualifier</b></span></a>
+    <a class="admin-link" href="/admin/">管理者ログイン <span aria-hidden="true">↗</span></a>
+  </div></header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div class="eyebrow">JBSL QUALIFIER / PARTICIPANTS</div>
+      <div class="title-line"><h1 id="page-title">開催中のQualifierリーグ</h1><span class="public-badge">ログイン不要</span></div>
+      <p>参加するリーグを選び、参加者のSIDを追加できます。</p>
+    </section>
+    <div class="list-toolbar"><div><strong id="league-count">リーグを取得中…</strong><p id="catalog-time">開催状況を確認しています。</p></div><button id="reload-leagues" type="button" disabled>一覧を更新</button></div>
+    <p id="catalog-notice" class="catalog-notice" role="status" aria-live="polite" hidden></p>
+    <div id="league-list" aria-busy="true"></div>
+    <noscript><p class="catalog-notice">一覧の表示とSID追加には、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+    <footer><p>SIDの追加だけを受け付けます。参加者の削除やリーグ設定の変更は、管理者が行います。</p><a href="/admin/">管理者ログインへ</a></footer>
+  </main>
+</body>
+</html>

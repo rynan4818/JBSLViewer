@@ -1,0 +1,61 @@
+{
+  "league_id": 3023,
+  "league_title": "Offline Qualifier League",
+  "total_rank": [
+    {
+      "standing": 1,
+      "sid": "76561198000000000",
+      "name": "Test Player",
+      "pos": 1,
+      "acc": 95.5
+    }
+  ],
+  "maps": [
+    {
+      "title": "Contract Song A",
+      "lid": "1001",
+      "bsr": "ABC1",
+      "hash": "0123456789ABCDEF0123456789ABCDEF01234567",
+      "scores": [
+        {
+          "standing": 1,
+          "sid": "76561198000000000",
+          "name": "Test Player",
+          "acc": 95.5,
+          "pos": 1,
+          "miss": 0
+        }
+      ],
+      "characteristic": "Standard",
+      "difficulty": "ExpertPlus",
+      "song_duration_seconds": 180.0,
+      "qualifier_attempt_limit": 3
+    },
+    {
+      "title": "Contract Song B",
+      "lid": "1002",
+      "bsr": "ABC2",
+      "hash": "89ABCDEF0123456789ABCDEF0123456789ABCDEF",
+      "scores": [],
+      "characteristic": "Standard",
+      "difficulty": "Expert",
+      "song_duration_seconds": 120.0,
+      "qualifier_attempt_limit": 2
+    }
+  ],
+  "isLive": true,
+  "isOpen": true,
+  "end": "2035-09-30T15:00:00Z",
+  "participants": [
+    {
+      "sid": "76561198000000000"
+    }
+  ],
+  "qualifier": {
+    "enabled": true,
+    "submission_method": "jbsl_qualifier_v1",
+    "revision": "42",
+    "starts_at": "2020-01-01T00:00:00Z",
+    "ends_at": "2035-09-30T15:00:00Z"
+  }
+}
