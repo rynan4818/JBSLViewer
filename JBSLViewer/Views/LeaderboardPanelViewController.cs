@@ -62,12 +62,7 @@ namespace JBSLViewer.Views
         [UIComponent("QualifierArea")] private readonly RectTransform _qualifierArea;
         [UIComponent("QualifierStatus")] private readonly TextMeshProUGUI _qualifierStatus;
         [UIComponent("QualifierChallenge")] private readonly Button _qualifierChallenge;
-        [UIComponent("QualifierConfirmation")] private readonly ModalView _qualifierConfirmation;
-        [UIComponent("QualifierConfirmText")] private readonly TextMeshProUGUI _qualifierConfirmText;
-        [UIComponent("QualifierConfirm")] private readonly Button _qualifierConfirm;
-        [UIComponent("QualifierCancel")] private readonly Button _qualifierCancel;
         [UIComponent("QualifierNotice")] private readonly TextMeshProUGUI _qualifierNotice;
-        private bool _qualifierModalShown;
         private bool _qualifierWasLocked;
 
         public async Task InitializeAsync(CancellationToken token)
@@ -480,15 +475,9 @@ namespace JBSLViewer.Views
             var state = _qualifier.ViewState;
             _qualifierNotice.text = _qualifier.Notice ?? "";
             _qualifierNotice.gameObject.SetActive(_qualifier.Notice != null && _qualifier.CaptureSelection().IsSolo && !state.Visible);
-            _qualifierArea.gameObject.SetActive(state.Visible);
-            _qualifierStatus.text = "Qualifier  " + (state.RemainingAttempts.HasValue
-                ? state.RemainingAttempts + " / " + state.AttemptLimit + " attempts remaining" : "")
-                + "\n" + (_qualifier.ConfigurationMessage ?? _qualifier.Notice ?? state.Message ?? "");
-            _qualifierChallenge.interactable = state.CanChallenge && _qualifier.ConfigurationMessage == null;
-            _qualifierConfirm.interactable = state.CanConfirm;
-            _qualifierCancel.interactable = state.ConfirmationOpen && _qualifier.SelectionLocked;
-            if (_qualifierModalShown && !state.ConfirmationOpen)
-            { _qualifierConfirmation.Hide(false); _qualifierModalShown = false; }
+            _qualifierArea.gameObject.SetActive(true);
+            _qualifierStatus.text = QualifierMenuController.Instance?.LaunchStatus ?? "Open the JBSL challenge room";
+            _qualifierChallenge.interactable = JBSLViewer.Qualifier.UI.QualifierMenuEntry.Instance?.CanOpen == true;
             if (_qualifierWasLocked != _qualifier.SelectionLocked)
             { _qualifierWasLocked = _qualifier.SelectionLocked; UpdateControlInteractivity(); }
         }
@@ -497,26 +486,9 @@ namespace JBSLViewer.Views
         private void Challenge()
         {
             QualifierMenuController.Instance?.SelectionUpdated();
-            if (!_qualifier.BeginConfirmation()) return;
             var selection = _qualifier.CaptureSelection();
-            _qualifierConfirmText.text = "Start a Qualifier challenge?\n\n"
-                + selection.Leaderboard?.Title + "\n" + selection.SongTitle + "\n"
-                + selection.Map?.Characteristic + " / " + selection.Map?.Difficulty
-                + "\n\nRemaining: " + _qualifier.ViewState.RemainingAttempts
-                + "\nOne attempt is consumed when the reservation succeeds.\nQuit, Restart or a failed start does not refund it.";
-            _qualifierModalShown = true;
-            _qualifierConfirmation.Show(true, true);
-            UpdateQualifierVisuals();
+            JBSLViewer.Qualifier.UI.QualifierMenuEntry.Instance?.Open(selection.LeagueId, selection.Map);
         }
-        [UIAction("QualifierConfirm")]
-        private async void ConfirmChallenge()
-        {
-            try { await _qualifier.ConfirmAsync(); }
-            catch (Exception ex) { Plugin.Log.Warn("Qualifier confirmation failed: " + ex.GetType().Name); }
-            finally { UpdateQualifierVisuals(); }
-        }
-        [UIAction("QualifierCancel")]
-        private void CancelChallenge() { _qualifier.CancelConfirmation(); UpdateQualifierVisuals(); }
 
         private void SetLeagueValueInternal(string value)
         {

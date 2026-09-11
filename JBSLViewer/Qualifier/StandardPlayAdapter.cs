@@ -12,6 +12,7 @@ namespace JBSLViewer.Qualifier
         private readonly SoloFreePlayFlowCoordinator _solo;
         private readonly SubmissionEligibilityTracker _submission;
         private readonly QualifierRuntime _runtime;
+        private readonly QualifierDirectPlayController _direct;
         private TaskCompletionSource<bool> _arrival;
         private ChallengeContext _context;
         private static readonly MethodInfo PlayMethod = AccessTools.DeclaredMethod(
@@ -19,27 +20,40 @@ namespace JBSLViewer.Qualifier
         internal static StandardPlayAdapter Pending { get; private set; }
         public bool Invoking { get; private set; }
 
-        public StandardPlayAdapter(SoloFreePlayFlowCoordinator solo, SubmissionEligibilityTracker submission, QualifierRuntime runtime)
-        { _solo = solo; _submission = submission; _runtime = runtime; }
+        public StandardPlayAdapter(SoloFreePlayFlowCoordinator solo, SubmissionEligibilityTracker submission, QualifierRuntime runtime, QualifierDirectPlayController direct)
+        { _solo = solo; _submission = submission; _runtime = runtime; _direct = direct; }
         public void Initialize() { _solo.didFinishEvent += FlowFinished; }
-        public Task<bool> StartAsync(ChallengeContext context)
+        public async Task<bool> StartAsync(ChallengeContext context)
         {
-            if (_arrival != null || PlayMethod == null || !_runtime.MenuCanStart(context)) return Task.FromResult(false);
+            if (context == null || _arrival != null || (!_direct.FromRoom && PlayMethod == null)) return false;
             _arrival = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var arrivalTask = _arrival.Task;
+            var completion = _arrival;
             _context = context;
             Pending = this;
-            _submission.Track(context.Submission);
             try
             {
-                // Invoke the standard method once, with all patches on that method.
-                // The NoFailCheck private button-event forwarding path is not invoked.
-                Invoking = true;
-                PlayMethod.Invoke(_solo, null);
+                _submission.Track(context.Submission);
+                if (_direct.FromRoom)
+                {
+                    var invoked = await _direct.StartChallengeAsync(context);
+                    if (!ReferenceEquals(_context, context) || !ReferenceEquals(_arrival, completion)) return await arrivalTask;
+                    if (!invoked) FailExplicitly();
+                }
+                else
+                {
+                    if (!_runtime.MenuCanStart(context)) { FailExplicitly(); return await arrivalTask; }
+                    Invoking = true;
+                    PlayMethod.Invoke(_solo, null);
+                }
             }
-            catch (Exception) { FailExplicitly(); }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn("Challenge standard Play failed: " + ex);
+                if (ReferenceEquals(_arrival, completion)) FailExplicitly();
+            }
             finally { Invoking = false; }
-            return arrivalTask;
+            return await arrivalTask;
         }
         internal void Arrived(ChallengeContext context)
         {
@@ -51,7 +65,20 @@ namespace JBSLViewer.Qualifier
         }
         internal void FailExplicitly()
         {
+            if (_context != null || _arrival != null)
+                _direct.RejectPending(_context, "The challenge could not start. Check the result status before trying again.");
             if (_context != null) _submission.Detach(_context.Submission);
+            _arrival?.TrySetResult(false);
+            _arrival = null;
+            _context = null;
+            if (Pending == this) Pending = null;
+        }
+        internal void ReturnedWithoutArrival(ChallengeContext context)
+        {
+            if (context == null || !ReferenceEquals(_context, context)) return;
+            // Let the coordinator seal a failed launch if no gameplay observer
+            // ever acknowledged it. The room already owns the return/result UI.
+            _submission.Detach(context.Submission);
             _arrival?.TrySetResult(false);
             _arrival = null;
             _context = null;

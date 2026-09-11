@@ -46,6 +46,7 @@ namespace JBSLViewer.Qualifier
 
         public void Initialize()
         {
+            QualifierRuntime.Instance?.StandardGameplayStarted();
             _generation = ++_nextGeneration;
             // No old observer or recorder may bind the replacement gameplay scene.
             if (Current != null && Current != this && Current.HasUnfinishedChallenge)

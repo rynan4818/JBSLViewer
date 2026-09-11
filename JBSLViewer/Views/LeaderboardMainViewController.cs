@@ -8,6 +8,7 @@ using HMUI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using Zenject;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
@@ -15,6 +16,8 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using JBSLViewer.Models;
 using JBSLViewer.Models.JBSL;
+using JBSLViewer.Qualifier;
+using JBSLViewer.Qualifier.Core.Contracts;
 
 namespace JBSLViewer.Views
 {
@@ -26,9 +29,18 @@ namespace JBSLViewer.Views
         private static readonly Color32 InvalidColor = new Color32(150, 150, 150, 255);
 
         public bool _init = false;
-        public int _page = 0;
+        private readonly LeaderboardPageState _paging = new LeaderboardPageState();
+        public int _page { get => _paging.Page; set => _paging.SetPage(value); }
+        private enum DisplayMode { PanelSelection, Total, Map }
+        private DisplayMode _displayMode;
+        private bool _pagingReady;
+        private int? _lastPanelLeagueId, _lastPanelIndex;
+        private Button _boundPageUp, _boundPageDown;
         private Task<string> _selfSidTask;
         private string _selfSid;
+        private int? _displayLeagueId;
+        private MapKey _displayMap;
+        private string _displayTitle;
 
         [Inject]
         private readonly ActiveLeague _activeLeague;
@@ -50,25 +62,46 @@ namespace JBSLViewer.Views
 
         [UIComponent("TitileBar")]
         private readonly Backgroundable _titileBar;
+        [UIComponent("up_button")] private readonly Button _pageUpButton;
+        [UIComponent("down_button")] private readonly Button _pageDownButton;
 
-        [UIAction("PageUp")]
-        public void PageUp()
+        public void PageUp() => ChangePage(-1);
+        public void PageDown() => ChangePage(1);
+        private void ChangePage(int direction)
         {
-            this._page--;
-            this.SetRecords();
+            if (!_pagingReady) return;
+            var previous = _paging.Page;
+            if (_paging.Move(direction)) SetRecords();
+            UpdatePageButtons();
+            Plugin.Log.Debug($"JBSL leaderboard page: {_displayMode}, league={_displayLeagueId ?? _lastPanelLeagueId}, "
+                + $"{previous + 1}->{_paging.Page + 1}/{_paging.PageCount}, rows={_paging.Count}");
         }
-
-        [UIAction("PageDown")]
-        public void PageDown()
+        private void BindPageButtons()
         {
-            this._page++;
-            this.SetRecords();
+            UnbindPageButtons();
+            _boundPageUp = _pageUpButton;
+            _boundPageDown = _pageDownButton;
+            if (_boundPageUp != null) _boundPageUp.onClick.AddListener(PageUp);
+            if (_boundPageDown != null) _boundPageDown.onClick.AddListener(PageDown);
+            UpdatePageButtons();
+        }
+        private void UnbindPageButtons()
+        {
+            if (_boundPageUp != null) _boundPageUp.onClick.RemoveListener(PageUp);
+            if (_boundPageDown != null) _boundPageDown.onClick.RemoveListener(PageDown);
+            _boundPageUp = _boundPageDown = null;
+        }
+        private void UpdatePageButtons()
+        {
+            if (_pageUpButton != null) _pageUpButton.interactable = _pagingReady && _paging.CanPrevious;
+            if (_pageDownButton != null) _pageDownButton.interactable = _pagingReady && _paging.CanNext;
         }
 
         [UIAction("#post-parse")]
         public void PostParse()
         {
             this._init = true;
+            BindPageButtons();
             var color = new Color32(228, 144, 50, 255);
             this._titileBar.Background.material = Utilities.ImageResources.NoGlowMat;
             var imageView = this._titileBar.Background as ImageView;
@@ -86,16 +119,45 @@ namespace JBSLViewer.Views
         {
             if (!this._init)
                 return;
-            if (title == null)
+            if (_displayLeagueId.HasValue)
+                this._title.text = _displayTitle ?? "JBSL CHALLENGE";
+            else if (title == null)
                 this._title.text = this._leaderboardPanelViewController.GetLeaderboardName();
             else
                 this._title.text = title;
-            this._page = 0;
-            if (this._leaderboardPanelViewController.LeaderboardValue == "0")
+            if (!_displayLeagueId.HasValue && this._leaderboardPanelViewController.LeaderboardValue == "0")
                 this._title.fontSize = 6f;
             else
                 this._title.fontSize = 3f;
             this.SetRecords();
+        }
+
+        // A separate instance in the challenge room uses the same layout and row
+        // renderer, without changing the native panel's selection or saved settings.
+        public void SetDisplaySelection(int leagueId, MapKey map, string title, string currentSid)
+        {
+            SetDisplay(DisplayMode.Map, leagueId, map, title, currentSid);
+        }
+
+        public void SetDisplayTotal(int leagueId, string title, string currentSid)
+        {
+            SetDisplay(DisplayMode.Total, leagueId, null, title, currentSid);
+        }
+
+        private void SetDisplay(DisplayMode mode, int leagueId, MapKey map, string title, string currentSid)
+        {
+            if (_displayMode != mode || _displayLeagueId != leagueId || !Equals(_displayMap, map)) _paging.Reset();
+            _displayMode = mode;
+            _displayLeagueId = leagueId;
+            _displayMap = map == null ? null : MapKey.Create(map.Hash, map.Characteristic, map.Difficulty);
+            _displayTitle = title;
+            _selfSid = currentSid;
+            if (_init)
+            {
+                _title.text = title;
+                _title.fontSize = 3f;
+                SetRecords();
+            }
         }
 
         public bool TryRefreshCurrentUserSid()
@@ -142,21 +204,45 @@ namespace JBSLViewer.Views
             if (!this._init || this._list == null)
                 return;
 
-            this.TryRefreshCurrentUserSid();
+            if (!_displayLeagueId.HasValue) this.TryRefreshCurrentUserSid();
             this._records.Clear();
             this._list.TableView.ReloadData();
-            if (LeaderboardPanelViewController.AllResetSemaphore.CurrentCount == 0 || LeaderboardPanelViewController.SetLeaderboardSemaphore.CurrentCount == 0)
-                return;
-            if (!int.TryParse(this._leaderboardPanelViewController.JBSLLeagueValue, out var leagueID))
-                return;
-            if (!int.TryParse(this._leaderboardPanelViewController.LeaderboardValue, out var index))
-                return;
+            _pagingReady = false;
+            UpdatePageButtons();
+            int leagueID, index;
+            if (_displayLeagueId.HasValue)
+            {
+                leagueID = _displayLeagueId.Value;
+                index = -1;
+            }
+            else
+            {
+                if (LeaderboardPanelViewController.AllResetSemaphore.CurrentCount == 0 || LeaderboardPanelViewController.SetLeaderboardSemaphore.CurrentCount == 0)
+                    return;
+                if (!int.TryParse(this._leaderboardPanelViewController.JBSLLeagueValue, out leagueID)) return;
+                if (!int.TryParse(this._leaderboardPanelViewController.LeaderboardValue, out index)) return;
+                if (_lastPanelLeagueId != leagueID || _lastPanelIndex != index) _paging.Reset();
+                _lastPanelLeagueId = leagueID;
+                _lastPanelIndex = index;
+            }
 
             var displayLeaderboard = this._virtualLeagueService.GetLeaderboardForDisplay(leagueID);
             if (displayLeaderboard == null)
                 displayLeaderboard = this._leaderboard.GetLeaderboardData(leagueID);
             if (displayLeaderboard == null)
                 return;
+            if (_displayMode == DisplayMode.Total)
+            {
+                index = 0;
+                _title.text = _displayTitle;
+            }
+            else if (_displayMode == DisplayMode.Map)
+            {
+                var mapIndex = QualifierScreenData.FindRankingIndex(displayLeaderboard, _displayMap);
+                if (mapIndex < 0) { _title.text = "No matching map leaderboard"; return; }
+                index = mapIndex + 1;
+                _title.text = _displayTitle;
+            }
 
             List<Score> scores;
             if (index == 0)
@@ -169,15 +255,12 @@ namespace JBSLViewer.Views
             var maxValid = Math.Max(this._activeLeague.GetLeagueMaxValid(leagueID), 0);
             var validityContext = this._leaderboard.BuildValidityContext(displayLeaderboard, maxValid);
             var totalMaxPos = Leaderboard.BuildTotalMaxPos(Leaderboard.InferLeagueBasePosFromMaps(displayLeaderboard), maxValid);
-            var maxPage = Math.Max(0, (scores.Count - 1) / 10);
-            if (maxPage < this._page)
-                this._page = maxPage;
-            if (this._page < 0)
-                this._page = 0;
+            _paging.SetCount(scores.Count);
+            _pagingReady = true;
 
             if (index == 0)
             {
-                foreach (var score in scores.Skip(this._page * 10).Take(10))
+                foreach (var score in scores.Skip(_paging.Offset).Take(LeaderboardPageState.PageSize))
                 {
                     validityContext.TryGetSummary(score.sid, out var summary);
                     var record = new Record(
@@ -199,7 +282,7 @@ namespace JBSLViewer.Views
             else
             {
                 var mapIndex = index - 1;
-                foreach (var score in scores.Skip(this._page * 10).Take(10))
+                foreach (var score in scores.Skip(_paging.Offset).Take(LeaderboardPageState.PageSize))
                 {
                     var isValid = validityContext.IsValidScore(mapIndex, score.sid);
                     var record = new Record(
@@ -220,6 +303,14 @@ namespace JBSLViewer.Views
             }
 
             this._list.TableView.ReloadData();
+            if (_records.Count > 0) _list.TableView.ScrollToCellWithIdx(0, TableView.ScrollPositionType.Beginning, false);
+            UpdatePageButtons();
+        }
+
+        protected override void OnDestroy()
+        {
+            UnbindPageButtons();
+            base.OnDestroy();
         }
 
         private bool IsCurrentUser(string sid)

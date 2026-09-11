@@ -1,0 +1,56 @@
+<!--
+Portions copied/adapted from TournamentAssistant.
+Source: https://github.com/MatrikMoon/TournamentAssistant?tab=MIT-1-ov-file
+Original: TournamentAssistant/UI/ViewControllers/ItemSelection.bsml
+Revision: ab4021a49f889bc36059efe3d8a2431097f1ffa5
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<!-- Thanks in part to BeatSaberMultiplayer's genius UI -->
+<vertical
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+    xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
+  <vertical id='league-controls'>
+  <horizontal spacing='2' pref-height='7'>
+    <text id='status' text='Select a league' font-size='3' word-wrapping='true' pref-width='85'/>
+    <button text='RELOAD' on-click='reload' pref-width='20' pref-height='6' font-size='2.5'/>
+  </horizontal>
+  <pg-button dir='Up' click-event='item-list#PageUp'/>
+  <custom-list visible-cells='6' cell-size='9' id='item-list' contents='items' select-cell='item-selected'>
+    <stack>
+      <vertical>
+        <text text='~item-name' align='Left' font-size='4' />
+        <text text='~item-details' id='item-details-text' align='Left'/>
+      </vertical>
+      <raw-image id='bg' tags='hovered' />
+    </stack>
+  </custom-list>
+  <pg-button dir='Down' click-event='item-list#PageDown'/>
+  </vertical>
+  <modal id='league-notice' click-off-closes='false' size-delta-x='100' size-delta-y='65'>
+    <vertical spacing='3' pad='4'>
+      <text id='notice-title' font-size='4' align='Center' word-wrapping='true' pref-width='90'/>
+      <text id='notice-league' font-size='3.5' align='Center' word-wrapping='true' pref-width='90'/>
+      <text id='notice-message' font-size='3' align='Center' word-wrapping='true' pref-width='90'/>
+      <button text='OK' on-click='notice-ok' pref-width='30' pref-height='8'/>
+    </vertical>
+  </modal>
+</vertical>
