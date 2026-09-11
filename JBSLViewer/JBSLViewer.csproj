@@ -78,6 +78,10 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Colors">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Colors.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="BeatmapCore">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatmapCore.dll</HintPath>
       <Private>False</Private>
@@ -165,6 +169,7 @@
     <Compile Include="Models\BeatLeader\BeatLeaderScoreJson.cs" />
     <Compile Include="Models\LatestUpdate.cs" />
     <Compile Include="Models\Leaderboard.cs" />
+    <Compile Include="Models\LeaderboardPageState.cs" />
     <Compile Include="Models\JBSL\LeagueJson.cs" />
     <Compile Include="Models\JBSL\LeaderboardJson.cs" />
     <Compile Include="Models\JBSL\PlaylistSongJson.cs" />
@@ -188,6 +193,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />
+    <EmbeddedResource Include="Qualifier\UI\*.bsml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')" />

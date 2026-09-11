@@ -25,3 +25,55 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+TournamentAssistant challenge-room UI and direct play
+Source: https://github.com/MatrikMoon/TournamentAssistant?tab=MIT-1-ov-file
+Revision: ab4021a49f889bc36059efe3d8a2431097f1ffa5
+Copied/adapted files:
+JBSLViewer/Qualifier/UI/QualifierLeagueSelectionViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/ItemSelection.bsml
+JBSLViewer/Qualifier/UI/QualifierSongSelectionViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/SongSelection.bsml
+JBSLViewer/Qualifier/UI/QualifierStatusViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/RemainingAttempts.bsml
+JBSLViewer/Qualifier/UI/QualifierLeagueSelectionViewController.cs
+  from TournamentAssistant/UI/ViewControllers/ItemSelection.cs; TournamentAssistant/UI/CustomListItems/GenericItem.cs
+JBSLViewer/Qualifier/UI/QualifierSongSelectionViewController.cs
+  from TournamentAssistant/UI/ViewControllers/SongSelection.cs
+JBSLViewer/Qualifier/UI/QualifierSongListItem.cs
+  from TournamentAssistant/UI/CustomListItems/SongListItem.cs
+JBSLViewer/Qualifier/UI/QualifierStatusViewController.cs
+  from TournamentAssistant/UI/ViewControllers/RemainingAttempts.cs
+JBSLViewer/Qualifier/UI/QualifierSongDetailViewController.bsml
+  from TournamentAssistant/UI/ViewControllers/SongDetail.bsml
+JBSLViewer/Qualifier/UI/QualifierSongDetailViewController.cs
+  from TournamentAssistant/UI/ViewControllers/SongDetail.cs; TournamentAssistant/Utilities/SongUtils.cs (GetJumpDistance)
+JBSLViewer/Qualifier/UI/QualifierFlowCoordinator.cs
+  from TournamentAssistant/UI/FlowCoordinators/QualifierCoordinator.cs; TournamentAssistant/UI/FlowCoordinators/EventSelectionCoordinator.cs
+JBSLViewer/Qualifier/UI/QualifierMenuEntry.cs
+  from TournamentAssistant/Plugin.cs (CreateMenuButton, MenuButtonPressed, disposal)
+JBSLViewer/Qualifier/QualifierDirectPlayController.cs
+  from TournamentAssistant/Utilities/SongUtils.cs (PlaySong); TournamentAssistant/UI/FlowCoordinators/QualifierCoordinator.cs (practice and finish callbacks)
+
+Original attribution comments in the remaining source (including BeatSaberMultiplayer) have been retained.
+The right-side leaderboard reuses JBSLViewer's LeaderboardMainViewController and its original BSML.
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

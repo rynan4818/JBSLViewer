@@ -16,6 +16,8 @@ namespace JBSLViewer.Installers
             this.Container.BindInterfacesAndSelfTo<LeaderboardRegisterer>().AsSingle();
             this.Container.BindInterfacesAndSelfTo<VirtualLeagueScoreUploadWatcher>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<UIManager>().AsSingle();
+            Container.BindInterfacesAndSelfTo<JBSLViewer.Qualifier.UI.QualifierMenuEntry>().AsSingle().NonLazy();
+            Container.BindInterfacesAndSelfTo<QualifierDirectPlayController>().AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<StandardPlayAdapter>().AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<QualifierMenuController>().AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<QualifierRestartUiController>().AsSingle().NonLazy();

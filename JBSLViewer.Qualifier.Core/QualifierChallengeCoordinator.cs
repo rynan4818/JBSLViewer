@@ -36,7 +36,7 @@ namespace JBSLViewer.Qualifier.Core {
             var matching=_statusGate!=null && Current(_statusGate) && _auth.IsAuthenticated(_statusSession) && _clock.UtcNow-_statusAt<TimeSpan.FromSeconds(10);var status=matching?_status:null;
             if(status!=null && !status.Eligible) visible=false;
             bool can=visible && status!=null && status.Eligible && status.ReasonCode=="eligible" && status.RemainingAttempts>0 && status.Map?.AttemptLimit>0 && status.Cache!=null && !status.Cache.Stale && allowed && !HasUnresolved;
-            var message=!visible?null:HasUnresolved?(_outbox.HasUnresolved?"Unresolved result — open settings":ActiveChallenge!=null?"In progress":"Reserving..."):!allowed?"Submission disabled: "+string.Join(", ",blockers??new string[0]):status==null?"Loading remaining attempts...":status.Cache.Stale?"Status cache is stale":status.ReasonCode;
+            var message=!visible?status?.ReasonCode:HasUnresolved?(_outbox.HasUnresolved?"Unresolved result — open settings":ActiveChallenge!=null?"In progress":"Reserving..."):!allowed?"Submission disabled: "+string.Join(", ",blockers??new string[0]):status==null?"Loading remaining attempts...":status.Cache.Stale?"Status cache is stale":status.ReasonCode;
             ViewState=new QualifierViewState {Visible=visible,CanChallenge=can && _confirmation==null && !_confirming,ConfirmationOpen=_confirmation!=null,CanConfirm=can && _confirmation!=null && !_confirming,RemainingAttempts=status?.RemainingAttempts,AttemptLimit=status?.Map?.AttemptLimit,Message=message};StateChanged?.Invoke();
         }
         public async Task RefreshAsync(bool force=false) {

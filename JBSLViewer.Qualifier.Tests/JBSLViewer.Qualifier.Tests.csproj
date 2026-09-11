@@ -10,7 +10,13 @@
   <Import Project="..\JBSLViewer.Qualifier.Core\JBSLViewer.Qualifier.Core.projitems" Label="Shared" />
   <ItemGroup>
     <Compile Include="..\JBSLViewer\Models\Leaderboard.cs"><Link>Production\Leaderboard.cs</Link></Compile>
+    <Compile Include="..\JBSLViewer\Models\LeaderboardPageState.cs"><Link>Production\LeaderboardPageState.cs</Link></Compile>
     <Compile Include="..\JBSLViewer\Models\JBSL\LeaderboardJson.cs"><Link>Production\LeaderboardJson.cs</Link></Compile>
+    <Compile Include="..\JBSLViewer\Qualifier\QualifierRoomState.cs"><Link>Production\QualifierRoomState.cs</Link></Compile>
+    <Compile Include="..\JBSLViewer\Qualifier\QualifierDirectPlayController.cs"><Link>Production\QualifierDirectPlayController.cs</Link></Compile>
+    <Compile Include="..\JBSLViewer\Qualifier\StandardPlayAdapter.cs"><Link>Production\StandardPlayAdapter.cs</Link></Compile>
+    <Compile Include="..\JBSLViewer\Qualifier\QualifierScreenData.cs"><Link>Production\QualifierScreenData.cs</Link></Compile>
+    <Compile Include="..\JBSLViewer\Qualifier\Replay\ReplayModeDetector.cs"><Link>Production\ReplayModeDetector.cs</Link></Compile>
   </ItemGroup>
   <ItemGroup><Compile Include="*.cs"/><Content Include="Fixtures\**\*"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content></ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -11,13 +11,13 @@ namespace JBSLViewer.Qualifier
 {
     [HarmonyPatch(typeof(SinglePlayerLevelSelectionFlowCoordinator), "LevelSelectionFlowCoordinatorDidActivate")]
     internal static class QualifierMenuReturnPatch
-    { private static void Postfix() { QualifierGameplayObserver.MenuActivated(); } }
+    { private static void Postfix() { QualifierGameplayObserver.MenuActivated(); QualifierRuntime.Instance?.StandardGameplayFinished(); } }
     [HarmonyPatch(typeof(StandardLevelScenesTransitionSetupDataSO), nameof(StandardLevelScenesTransitionSetupDataSO.Finish))]
     internal static class QualifierFinishPatch
     {
         // Snapshot before existing finish listeners can replace the gameplay scene.
         private static void Prefix(StandardLevelScenesTransitionSetupDataSO __instance, LevelCompletionResults levelCompletionResults)
-        { QualifierGameplayObserver.Current?.Finish(__instance, levelCompletionResults); }
+        { QualifierGameplayObserver.Current?.Finish(__instance, levelCompletionResults); QualifierRuntime.Instance?.StandardGameplayFinished(); }
     }
     [HarmonyPatch(typeof(ScoreController), nameof(ScoreController.LateUpdate))]
     internal static class QualifierScoringPatch

@@ -21,17 +21,30 @@ namespace JBSLViewer.Qualifier
         private readonly LeaderboardPanelViewController _panel;
         private readonly Leaderboard _leaderboard;
         private readonly StandardPlayAdapter _play;
+        private readonly UI.QualifierMenuEntry _room;
+        private readonly QualifierDirectPlayController _direct;
+        private bool _previousRoom;
         private readonly Dictionary<CanvasGroup, Tuple<bool, bool>> _groups = new Dictionary<CanvasGroup, Tuple<bool, bool>>();
         private long _generation;
         private SelectionSnapshot _previous;
         public static QualifierMenuController Instance { get; private set; }
-        public bool Locked => _runtime.SelectionLocked;
+        public bool Locked => _runtime.SelectionLocked || _direct.Preparing;
         public bool Invoking => _play.Invoking;
+        public string LaunchStatus => _direct.Status;
+        public bool PreparingDirectPlay => _direct.Preparing;
+        internal void DirectMenuActivated() => _direct.MenuActivated();
+        internal bool CancelPendingLaunch()
+        {
+            if (!_direct.CancelPreparation()) return false;
+            _play.FailExplicitly();
+            ApplyLock();
+            return true;
+        }
 
         public QualifierMenuController(QualifierRuntime runtime, PlayerIdentityService identity, SoloFreePlayFlowCoordinator solo,
             StandardLevelDetailViewController detail, GameplaySetupViewController setup, LeaderboardPanelViewController panel,
-            Leaderboard leaderboard, StandardPlayAdapter play)
-        { _runtime = runtime; _identity = identity; _solo = solo; _detail = detail; _setup = setup; _panel = panel; _leaderboard = leaderboard; _play = play; }
+            Leaderboard leaderboard, StandardPlayAdapter play, UI.QualifierMenuEntry room, QualifierDirectPlayController direct)
+        { _runtime = runtime; _identity = identity; _solo = solo; _detail = detail; _setup = setup; _panel = panel; _leaderboard = leaderboard; _play = play; _room = room; _direct = direct; }
         public void Initialize()
         {
             Instance = this;
@@ -48,7 +61,7 @@ namespace JBSLViewer.Qualifier
         private void ContentChanged(StandardLevelDetailViewController view, StandardLevelDetailViewController.ContentType content)
         {
             // Explicit failed/cancelled level content is a failure, never elapsed loading time.
-            if (content == StandardLevelDetailViewController.ContentType.Error) StandardPlayAdapter.Pending?.FailExplicitly();
+            if (!_room.OwnsSelection && content == StandardLevelDetailViewController.ContentType.Error) StandardPlayAdapter.Pending?.FailExplicitly();
             SelectionUpdated();
         }
         private void BoardUpdated(int league) { if (_previous?.LeagueId == league) SelectionUpdated(); }
@@ -59,19 +72,22 @@ namespace JBSLViewer.Qualifier
         public void SelectionUpdated()
         {
             int.TryParse(_panel.JBSLLeagueValue, out var league);
-            var map = _detail.selectedDifficultyBeatmap;
+            var fromRoom = _room.OwnsSelection;
+            if (fromRoom) league = _room.LeagueId;
+            var map = fromRoom ? _room.SelectedBeatmap : _detail.selectedDifficultyBeatmap;
             Core.Contracts.MapKey key = null;
             try { if (map != null) key = QualifierGameplayObserver.ReadMap(map); } catch (Exception) { }
             var duration = map?.level?.songDuration;
             var snapshot = new SelectionSnapshot {
-                LeagueId = league, CurrentSid = _identity.CurrentSid, Map = key, IsSolo = IsSoloSelection,
+                LeagueId = league, CurrentSid = _identity.CurrentSid, Map = key,
+                IsSolo = fromRoom ? _room.SelectionReady && !_runtime.SceneTransitioning && Replay.ReplayModeDetector.BlockingReason() == null : IsSoloSelection,
                 SongTitle = map?.level?.songName, LocalSongDurationSeconds = duration.HasValue && duration > 0
                     && !float.IsInfinity(duration.Value) && !float.IsNaN(duration.Value) ? (double?)duration.Value : null,
                 SongSpeedMultiplier = _setup.gameplayModifiers?.songSpeedMul,
                 Leaderboard = _leaderboard.GetLeaderboardData(league)?.qualifierContract,
                 LeaderboardFresh = _leaderboard.IsQualifierCacheFresh(league)
             };
-            if (_previous == null || snapshot.LeagueId != _previous.LeagueId || !Equals(snapshot.Map, _previous.Map)
+            if (_previous == null || fromRoom != _previousRoom || snapshot.LeagueId != _previous.LeagueId || !Equals(snapshot.Map, _previous.Map)
                 || snapshot.IsSolo != _previous.IsSolo || snapshot.CurrentSid != _previous.CurrentSid
                 || snapshot.LocalSongDurationSeconds != _previous.LocalSongDurationSeconds
                 || snapshot.SongSpeedMultiplier != _previous.SongSpeedMultiplier
@@ -79,6 +95,7 @@ namespace JBSLViewer.Qualifier
                 || snapshot.LeaderboardFresh != _previous.LeaderboardFresh)
             {
                 snapshot.SelectionGeneration = ++_generation;
+                _previousRoom = fromRoom;
                 _previous = snapshot;
                 _runtime.UpdateSelection(snapshot);
             }
@@ -86,17 +103,24 @@ namespace JBSLViewer.Qualifier
         internal bool CanStart(ChallengeContext context)
         {
             SelectionUpdated();
-            return IsSoloSelection && _previous != null && context.OwnerSid == _identity.CurrentSid
+            if (context == null || _runtime.SceneTransitioning) return false;
+            var fromRoom = _room.OwnsSelection;
+            Core.Contracts.MapKey actual = null;
+            try { actual = QualifierGameplayObserver.ReadMap(fromRoom ? _room.SelectedBeatmap : _detail.selectedDifficultyBeatmap); } catch (Exception) { }
+            return (fromRoom ? _room.SelectionReady : IsSoloSelection) && Equals(context.Map, actual) && _previous != null && context.OwnerSid == _identity.CurrentSid
                 && context.LeagueId == _previous.LeagueId && Equals(context.Map, _previous.Map)
+                && Replay.ReplayModeDetector.BlockingReason() == null
                 && _runtime.IsSubmissionAllowed(out _);
         }
         internal System.Threading.Tasks.Task<bool> StartAsync(ChallengeContext context) => _play.StartAsync(context);
+        internal System.Threading.Tasks.Task StartPracticeAsync() => _direct.StartPracticeAsync();
         public void ApplyLock()
         {
+            _room.ApplyLock();
             if (!Locked) { RestoreGroups(); return; }
             // Lock song list, difficulty, characteristic, Play/Practice and modifiers.
             LockRoot(_solo.topViewController as LevelSelectionNavigationController);
-            LockRoot(_setup);
+            if (!_room.IsOpen) LockRoot(_setup);
         }
         private void LockRoot(Component root)
         {
@@ -127,7 +151,14 @@ namespace JBSLViewer.Qualifier
 
     [HarmonyPatch(typeof(SinglePlayerLevelSelectionFlowCoordinator), "BackButtonWasPressed")]
     internal static class QualifierBackLockPatch
-    { private static bool Prefix() => QualifierMenuController.Instance?.Locked != true; }
+    {
+        private static bool Prefix()
+        {
+            var menu = QualifierMenuController.Instance;
+            if (menu?.CancelPendingLaunch() == true) return false;
+            return menu?.Locked != true;
+        }
+    }
     [HarmonyPatch(typeof(SinglePlayerLevelSelectionFlowCoordinator), "ActionButtonWasPressed")]
     internal static class QualifierPlayLockPatch
     {

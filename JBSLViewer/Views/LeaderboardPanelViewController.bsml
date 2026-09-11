@@ -34,15 +34,4 @@
   <horizontal anchor-pos-x="32" anchor-pos-y="5">
     <text id="QualifierNotice" font-size="2.5" align="Center" word-wrapping="true" pref-width="88" anchor-pos-y="-18"/>
   </horizontal>
-  <horizontal anchor-pos-x="32" anchor-pos-y="5">
-    <modal id="QualifierConfirmation" click-off-closes="false" size-delta-x="95" size-delta-y="63">
-      <vertical spacing="3" pad="4">
-        <text id="QualifierConfirmText" font-size="3" word-wrapping="true" align="Center" pref-width="85"/>
-        <horizontal spacing="5">
-          <button id="QualifierCancel" text="CANCEL" on-click="QualifierCancel"/>
-          <button id="QualifierConfirm" text="CONFIRM" on-click="QualifierConfirm"/>
-        </horizontal>
-      </vertical>
-    </modal>
-  </horizontal>
 </bg>
