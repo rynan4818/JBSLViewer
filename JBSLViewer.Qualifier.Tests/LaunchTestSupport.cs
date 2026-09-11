@@ -132,6 +132,10 @@ public sealed class MenuTransitionsHelper
         Action<StandardLevelScenesTransitionSetupDataSO, LevelCompletionResults> finished,
         Action<StandardLevelScenesTransitionSetupDataSO, LevelCompletionResults> restarted, IBeatmapLevelData data, RecordingToolManager.SetupData? recording)
     {
+        // BS1.42.0's helper supplies BeatmapLevelsModel; the native scene setup
+        // rejects supplying loaded data at the same time, before pushing gameplay.
+        if (data != null)
+            throw new ArgumentException("When the beatmapLevelData is provided, there is no need to provide _beatmapLevelsModel.", "beatmapLevelData");
         var call = new Invocation { Mode = mode, Key = key, Level = level, Data = data, Environment = environment,
             Colors = colors, OverrideLightshow = overrideLightshow, AdditionalInformation = additionalInformation, Environments = environments,
             Modifiers = modifiers, Settings = settings, Practice = practice, Finished = finished, Restarted = restarted };

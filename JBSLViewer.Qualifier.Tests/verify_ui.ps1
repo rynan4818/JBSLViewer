@@ -26,6 +26,13 @@ function TypesIncludingNested($Type) {
     $Type
     foreach ($taskNested in $Type.NestedTypes) { TypesIncludingNested $taskNested }
 }
+function LocalSlot($Instruction) {
+    if ($Instruction.OpCode.Name -match '^(ldloc|stloc)\.([0-3])$') { return [int]$Matches[2] }
+    if ($Instruction.OpCode.Name -in @('ldloc','ldloc.s','ldloca','ldloca.s','stloc','stloc.s')) {
+        return $Instruction.Operand.Index
+    }
+    return -1
+}
 try {
     $taskNotices = [IO.File]::ReadAllText((Join-Path $Repository 'THIRD-PARTY-NOTICES.txt'))
     $taskUrl = 'https://github.com/MatrikMoon/TournamentAssistant?tab=MIT-1-ov-file'
@@ -163,15 +170,51 @@ try {
     $taskNativeStart = @($taskGame.MainModule.GetType('MenuTransitionsHelper').Methods | Where-Object {
         $_.Name -eq 'StartStandardLevel' -and @($_.Parameters | Where-Object { $_.ParameterType.FullName -eq 'IBeatmapLevelData' }).Count -eq 1
     })
-    Check ($taskNativeStart.Count -eq 1 -and $taskNativeStart[0].Parameters[1].ParameterType.FullName -eq 'BeatmapKey&' -and
+    Check ($taskNativeStart.Count -eq 1 -and $taskNativeStart[0].Parameters.Count -eq 17 -and
+        $taskNativeStart[0].Parameters[1].ParameterType.FullName -eq 'BeatmapKey&' -and
         $taskNativeStart[0].Parameters[2].ParameterType.FullName -eq 'BeatmapLevel' -and
-        @($taskNativeStart[0].Parameters | Where-Object { $_.Name -in @('levelFinishedCallback','levelRestartedCallback') }).Count -eq 2) 'Installed game exposes direct start with the exact key, loaded level data and both callbacks'
+        $taskNativeStart[0].Parameters[15].Name -eq 'beatmapLevelData' -and $taskNativeStart[0].Parameters[15].IsOptional -and
+        $taskNativeStart[0].Parameters[15].HasConstant -and $null -eq $taskNativeStart[0].Parameters[15].Constant -and
+        @($taskNativeStart[0].Parameters | Where-Object { $_.Name -in @('levelFinishedCallback','levelRestartedCallback') }).Count -eq 2) 'Installed game exposes direct start with the exact key and level, optional null data and both callbacks'
+    # Confirm the native source of data, not just the public method signature.
+    $taskModelReads = @($taskNativeStart[0].Body.Instructions | Where-Object {
+        $_.OpCode.Name -eq 'ldfld' -and $_.Operand.Name -eq '_beatmapLevelsModel'
+    })
+    $taskSetupCalls = @($taskNativeStart[0].Body.Instructions | Where-Object {
+        $_.OpCode.Name -eq 'callvirt' -and $_.Operand.DeclaringType.FullName -eq 'StandardLevelScenesTransitionSetupDataSO' -and $_.Operand.Name -eq 'Init'
+    })
+    Check ($taskModelReads.Count -eq 1 -and $taskSetupCalls.Count -eq 1 -and
+        $taskSetupCalls[0].Operand.Parameters[15].ParameterType.FullName -eq 'BeatmapLevelsModel' -and
+        $taskModelReads[0].Next.OpCode.Name -like 'stloc*' -and
+        $taskSetupCalls[0].Previous.Previous.Previous.OpCode.Name -like 'ldloc*' -and
+        (LocalSlot $taskModelReads[0].Next) -eq (LocalSlot $taskSetupCalls[0].Previous.Previous.Previous) -and
+        $taskSetupCalls[0].Previous.Previous.Operand.Name -eq 'beatmapLevelData' -and
+        $taskSetupCalls[0].Previous.Operand.Name -eq 'recordingToolData') 'Installed direct start passes its BeatmapLevelsModel together with the optional data argument'
+    $taskDataGuards = @($taskGame.MainModule.GetType('GameplayCoreSceneSetupData').Methods | Where-Object IsConstructor |
+        ForEach-Object { $_.Body.Instructions } | Where-Object {
+            $_.OpCode.Name -eq 'ldstr' -and $_.Operand -eq 'When the beatmapLevelData is provided, there is no need to provide _beatmapLevelsModel.'
+        })
+    Check ($taskDataGuards.Count -eq 1 -and $taskDataGuards[0].Next.Operand -eq 'beatmapLevelData' -and
+        $taskDataGuards[0].Next.Next.OpCode.Name -eq 'newobj' -and $taskDataGuards[0].Next.Next.Operand.DeclaringType.FullName -eq 'System.ArgumentException' -and
+        $taskDataGuards[0].Next.Next.Next.OpCode.Name -eq 'throw') 'Installed scene setup retains the model/data conflict exception reproduced by the launch tests'
     $taskDirect = $taskAssembly.MainModule.GetType('JBSLViewer.Qualifier.QualifierDirectPlayController')
     Check ($null -ne $taskDirect -and $null -eq $taskAssembly.MainModule.GetType('JBSLViewer.Qualifier.QualifierSoloLaunchBridge')) 'Direct-play controller replaces the old Solo launch bridge'
     $taskDirectInstructions = @(TypesIncludingNested $taskDirect | ForEach-Object { $_.Methods } | Where-Object HasBody | ForEach-Object { $_.Body.Instructions })
     $taskDirectCalls = @($taskDirectInstructions | Where-Object { $_.OpCode.Name -in @('call','callvirt') } | ForEach-Object { $_.Operand })
     $taskStartCalls = @($taskDirectCalls | Where-Object { $_.DeclaringType.FullName -eq 'MenuTransitionsHelper' -and $_.Name -eq 'StartStandardLevel' })
     Check ($taskStartCalls.Count -eq 1 -and $taskStartCalls[0].FullName -eq $taskNativeStart[0].FullName) 'Built direct launch calls the exact installed game signature'
+    $taskStartInstruction = $taskDirectInstructions | Where-Object {
+        $_.OpCode.Name -in @('call','callvirt') -and $_.Operand.FullName -eq $taskNativeStart[0].FullName
+    }
+    # The last argument is a default Nullable<SetupData>; immediately before its
+    # initialization, the data argument must be ldnull, never QualifierBeatmap.Data.
+    $taskRecordingLoad = $taskStartInstruction.Previous
+    $taskRecordingInit = $taskRecordingLoad.Previous
+    $taskRecordingAddress = $taskRecordingInit.Previous
+    Check ($taskRecordingAddress.Previous.OpCode.Name -eq 'ldnull' -and
+        $taskRecordingAddress.OpCode.Name -in @('ldloca','ldloca.s') -and
+        $taskRecordingInit.OpCode.Name -eq 'initobj' -and $taskRecordingInit.Operand.FullName -eq $taskNativeStart[0].Parameters[16].ParameterType.FullName -and
+        $taskRecordingLoad.OpCode.Name -like 'ldloc*' -and (LocalSlot $taskRecordingAddress) -eq (LocalSlot $taskRecordingLoad)) 'Built direct launch passes null beatmap data so the native model loads the selected key'
     Check (@($taskDirectCalls | Where-Object { $_.Name -in @('PresentFlowCoordinator','DismissFlowCoordinator','SelectLevel','ActionButtonWasPressed','PracticeButtonWasPressed') }).Count -eq 0) 'Dedicated direct launch does not present or operate a Solo selection flow'
     Check (@($taskDirectInstructions | Where-Object { $_.OpCode.Name -eq 'newobj' -and $_.Operand.DeclaringType.FullName -eq 'PracticeSettings' }).Count -eq 0) 'Direct PRACTICE does not construct native practice settings'
     Check (@($taskDirectCalls | Where-Object { $_.DeclaringType.FullName -like '*QualifierChallengeCoordinator' -or $_.DeclaringType.FullName -like '*QualifierOutbox' -or $_.Name -eq 'GameplayFinished' }).Count -eq 0) 'Direct UI completion does not create or submit another challenge result'

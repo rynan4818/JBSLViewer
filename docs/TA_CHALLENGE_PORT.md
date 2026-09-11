@@ -19,7 +19,7 @@ TAの1.37系ブランチは1.37.0向けであり、JBSLの1.37.1については1
 
 1.40.8以降は `ShouldOverrideLightshowColors() || colors != null` を渡し、明示的な色指定をライトにも適用するTAの修正を反映した。1.42.0では `GameplayAdditionalInformation(Localization.Get("BUTTON_MENU"))` と新版のコールバックを使用する。
 
-TAと同じく `MenuTransitionsHelper.StartStandardLevel` を呼び、ソロの選曲画面を開かず、専用フローを保持する。指定難易度を正確にロードした `BeatmapKey`、`BeatmapLevel`、`IBeatmapLevelData` をそのまま渡す。JBSLの参加資格・予約・提出処理は既存の担当クラスが処理する。譜面側の色指定も、1.37.1～1.40.8では本体APIへ渡し、1.42.0では本体が渡された `BeatmapLevel` から解決する。
+TAと同じく `MenuTransitionsHelper.StartStandardLevel` を呼び、ソロの選曲画面を開かず、専用フローを保持する。指定難易度を確認した `BeatmapKey` と `BeatmapLevel` を渡す。1.37.1～1.40.8はロード済みの `IBeatmapLevelData` も渡すが、1.42.0はTAと同じくオプションの `beatmapLevelData` に `null` を渡し、本体の `BeatmapLevelsModel` に読み込みを任せる。JBSLの参加資格・予約・提出処理は既存の担当クラスが処理する。譜面側の色指定も、1.37.1～1.40.8では本体APIへ渡し、1.42.0では本体が渡された `BeatmapLevel` から解決する。
 
 TA由来の各コード・BSMLの先頭に元ファイル、リビジョン、[指定URL](https://github.com/MatrikMoon/TournamentAssistant?tab=MIT-1-ov-file)とMIT全文を記載した。`THIRD-PARTY-NOTICES.txt`にはTA、BeatLeader、JBSLViewerのライセンス全文を収録した。
 
@@ -33,7 +33,7 @@ TA由来の各コード・BSMLの先頭に元ファイル、リビジョン、[�
 - 1.40.8以降はノーツ速度計算の追加引数、1.42.0では `GetBeatmapLevel` の大文字小文字照合と17引数の開始APIへ対応する。
 - リザルトは `Init` の6引数版で初期化する。専用インスタンスのイベント登録・解除、CONTINUE、PRACTICEのRESTART、Quit、二重通知と遅延通知への対処を保持する。
 
-## 今回の検証結果
+## 初回移植時の検証結果
 
 | 対象 | BeatSaberVersion.txt | ゲーム外テスト | 実DLLのAPI照合 | BSML・画面接続・ライセンス |
 |---|---|---:|---:|---:|
@@ -50,4 +50,16 @@ TA由来の各コード・BSMLの先頭に元ファイル、リビジョン、[�
 
 再現手順は各版の `build.ps1`（Releaseビルド、ゲーム外テスト、API検証）と、`JBSLViewer.Qualifier.Tests/verify_ui.ps1 -GameDirectory <対象ゲーム> -ModReferencesDir <Mod参照元>`。ビルドではゲームへのコピーを無効にした。
 
-統合ZIPのファイルは、ルートの `THIRD-PARTY-NOTICES.txt` と、各 `BS<対象版>/Plugins/JBSLViewer.DLL` の計5個のみ。検証資料・README・単独LICENSE・PDB・依存DLLは統合ZIPへ含めない。
+初回の4版統合ZIPは計5ファイル。その後、動作確認済みの1.29.1も同梱した5版統合ZIPを作成した。5版統合ZIPはルートの `THIRD-PARTY-NOTICES.txt` と、1.29.1 / 1.37.1 / 1.39.1 / 1.40.8 / 1.42.0の各 `BS<対象版>/Plugins/JBSLViewer.DLL` の計6ファイルのみ。検証資料・README・単独LICENSE・PDB・依存DLLは統合ZIPへ含めない。
+
+## BS1.42.0の開始時例外の修正（2026-09-11）
+
+1.42.0では、CHALLENGEの予約成功後とPRACTICEの開始時に `standard_play_invocation_failed` が発生した。ログの `ArgumentException` と本体ソースから、`MenuTransitionsHelper` が内部の `BeatmapLevelsModel` と渡された `beatmapLevelData` を同時にシーン初期化へ渡し、`GameplayCoreSceneSetupData` が拒否していることを確認した。初回のAPIシグネチャ照合とゲーム代替は、この引数の組み合わせを検証できていなかった。
+
+`QualifierDirectPlayController.StartAsync` の共通開始経路で `beatmapLevelData` を `null` に変更した。TAの1.42.0対応ブランチと同じ方法で、指定したKey / Levelを本体に読み込ませる。選曲時の `QualifierBeatmap.Data` / `BasicInfo` は保持し、指定難易度の事前読み込みと開始可否確認に引き続き使用する。
+
+ゲーム代替に本体の拒否条件を追加すると、修正前のコードで開始テストが失敗することを確認した。修正後はCHALLENGEとPRACTICEの両方で「事前読み込み済みの同じKey / Levelを渡し、開始APIのDataはnull」を検証する。`verify_ui.ps1` は実DLLのモデル引数と例外を確認し、ビルドした呼び出し命令がnullデータを渡すことも検証する。
+
+修正版は、1.42.0へ切り替え済みの `C:\Program Files (x86)\Steam\steamapps\common\Beat Saber` をゲーム本体・Mod双方の参照元としてReleaseビルドした。ゲーム外テスト307件、実DLLのAPI照合498件、画面接続・開始引数・ライセンス検証478件が成功した。追加したDLL検証が旧DLLのデータ引数を拒否することも確認済み。
+
+5版統合ZIPでは1.42.0のDLLを更新し、ほか4版とライセンス通知は配布済みの内容を保持する。修正版DLLのSHA-256は `2C06385BBE8DBC47F132C8441942EAE167223F3B6CCC87307270C02829E44DEE`。VR実機での操作・実プレイ確認は未実施。

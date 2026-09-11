@@ -52,8 +52,10 @@ namespace JBSLViewer.Qualifier.Tests
                 Program.Check(!launch.IsCompleted && rig.Engine.Calls.Count == 1 && rig.Solo.PlayCalls == 0,
                     "challenge invokes the game directly once and still waits for gameplay arrival");
                 var call = rig.Engine.Calls[0];
-                Program.Check(call.Mode == "Solo" && call.Key.Equals(rig.Map.Key) && call.Level == rig.Map.Level && call.Data == rig.Map.Data && call.Practice == null,
-                    "direct challenge starts the exact loaded map as a full standard play");
+                Program.Check(call.Mode == "Solo" && call.Key.Equals(rig.Map.Key) && call.Level == rig.Map.Level && call.Practice == null,
+                    "direct challenge starts the exact selected map as a full standard play");
+                Program.Check(rig.Map.Data != null && rig.Map.IsReady && call.Data == null,
+                    "challenge retains preflight data but lets the native model load the selected map");
                 Program.Check(call.Environment == rig.Setup.environmentOverrideSettings && call.Colors == rig.Setup.colorSchemesSettings.Color
                     && call.Modifiers == rig.Setup.gameplayModifiers && call.Settings == rig.Setup.playerSettings,
                     "direct launch carries the configured environment, colors, modifiers and player settings");
@@ -93,6 +95,10 @@ namespace JBSLViewer.Qualifier.Tests
                 await practice;
                 Program.Check(rig.Engine.Calls.Count == 1 && rig.Engine.Calls[0].Practice == null && rig.Solo.PlayCalls == 0,
                     state + ": PRACTICE starts full play without a native practice selection screen");
+                var call = rig.Engine.Calls[0];
+                Program.Check(call.Key.Equals(rig.Map.Key) && call.Level == rig.Map.Level && call.Data == null
+                    && rig.Map.Data != null && rig.Map.IsReady,
+                    state + ": PRACTICE retains preflight data and delegates the exact selected map to the native model");
                 Program.Check(rig.Runtime.OrdinaryStarts == 1 && rig.Tracker.Tracks == 0 && rig.Runtime.ActiveChallenge == null,
                     state + ": PRACTICE uses no challenge reservation or submission owner");
                 rig.Room.GameplayStarted();

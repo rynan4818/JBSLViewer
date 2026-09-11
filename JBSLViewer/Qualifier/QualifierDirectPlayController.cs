@@ -121,14 +121,16 @@ namespace JBSLViewer.Qualifier
                 if (practice) _runtime.OrdinaryPlayRequested();
                 operation.Invoked = true;
                 Plugin.Log.Info("Challenge launch: starting directly from the challenge room");
-                // TA starts the loaded beatmap here without presenting a Solo flow.
+                // TA starts the selected beatmap here without presenting a Solo flow.
                 // JBSL's reservation and gameplay observer remain responsible for
                 // challenge ownership, eligibility, replay capture and submission.
+                // BS1.42.0 supplies BeatmapLevelsModel internally and rejects loaded
+                // data alongside it. Pass null as TA does so the game loads this key.
                 var key = beatmap.Key;
                 _transitions.StartStandardLevel("Solo", in key, beatmap.Level, environment, colors, overrideLightshow,
                     modifiers, settings, null, _environments, new GameplayAdditionalInformation(Localization.Get("BUTTON_MENU")), null, null,
                     (transition, result) => Finished(operation, transition, result),
-                    (transition, result) => Restarted(operation), beatmap.Data, null);
+                    (transition, result) => Restarted(operation), null, null);
                 return true;
             }
             catch (Exception ex)
