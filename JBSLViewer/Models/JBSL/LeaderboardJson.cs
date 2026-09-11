@@ -26,6 +26,8 @@ namespace JBSLViewer.Models.JBSL
         public string lid { get; set; }
         //public string bsr { get; set; }
         public string hash { get; set; }
+        public string characteristic { get; set; }
+        public string difficulty { get; set; }
         public List<Score> scores { get; set; }
     }
 
