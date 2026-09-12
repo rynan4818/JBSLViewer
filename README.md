@@ -68,6 +68,14 @@ Clear / Failでは専用画面内に標準のリザルトUIを表示し、`CONTI
 
 結果の所有者と送信先は予約時点で固定されます。URLを変更すると旧送信先の結果は`server_mismatch`で保留され、別サーバへ送り替えません。元のURLへ戻すと元の状態に従って復旧します。Cookieや認証ticketはOutboxへ保存しません。起動をまたぐ結果復旧は永続保存できた結果が対象です。応答不明のreserveは起動をまたいで再送しません。
 
+## 仕様書
+
+以下はRevision 10の共通資料です。調査基準はBS1.39.1版と仮サーバで、各版の対応範囲・差分はこのREADMEを参照してください。
+
+- [スコア管理サーバAPI仕様書](docs/JBSL_Qualifier_Score_Manager_API_Specification.md)
+- [Qualifier全体設計仕様書](docs/JBSL_Qualifier_Design_For_GPT-5.6Sol.md)
+- [JBSL-WEB Qualifier API仕様書](docs/JBSL_WEB_Qualifier_API_Specification.md)
+
 ## 設定と仮サーバ
 
 `scoreServerBaseUrl`の初期値は空です。ゲームのJBSLViewer設定で、利用するスコア管理サーバのHTTPS URLを設定してください。ローカルのPython仮サーバは、このリポジトリの1階層上にある`mock_servers`です。起動・fixture・認証modeは[`mock_servers/README.md`](../mock_servers/README.md)を参照してください。
